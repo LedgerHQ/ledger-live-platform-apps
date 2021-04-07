@@ -15,7 +15,7 @@ const PROJECT_ID = "a1664f14bbf54437acd24a79a600e3cc"
 
 const DappBrowser = () => {
     const router = useRouter()
-    const iframeRef = useRef(null);
+    const iframeRef = useRef<HTMLIFrameElement>(null);
     const [mounted, setMounted] = useState(false);
 
     const { url } = router.query
@@ -29,7 +29,9 @@ const DappBrowser = () => {
         const dappURL = new URL(String(url));
         const ws = new WebSocket(`wss://ropsten.infura.io/ws/v3/${PROJECT_ID}`);
 
-        iframeRef.current.src = dappURL.toString();
+        if (iframeRef.current) {
+            iframeRef.current.src = dappURL.toString();
+        }
 
         ws.onopen = () => {
             console.log("connected to Infura node")
@@ -38,13 +40,14 @@ const DappBrowser = () => {
         ws.onmessage = (message) => {
             const rpcJson = JSON.parse(message.data);
             console.log("from infura: ", rpcJson);
-            const iframe = iframeRef.current;
-            iframe.contentWindow.postMessage(rpcJson, dappURL.origin);
+            if (iframeRef.current && iframeRef.current.contentWindow) {
+                iframeRef.current.contentWindow.postMessage(rpcJson, dappURL.origin);
+            }
         }
 
 
         window.addEventListener("message", function(event) {
-            if (event.origin === dappURL.origin) {
+            if (event.origin === dappURL.origin && event.source && event.source instanceof Window) {
                 const data = event.data;
                 console.log("from dapp: ", data)
                 switch (data.method) {
@@ -90,9 +93,7 @@ const DappBrowser = () => {
 
     return (
         <AppLoaderPageContainer>
-            <DappIframe
-                ref={iframeRef}
-            />
+            <DappIframe ref={iframeRef} />
         </AppLoaderPageContainer>
     );
 };
