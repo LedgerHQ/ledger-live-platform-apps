@@ -2,6 +2,7 @@ import React, {useState, useEffect, useRef, useCallback, useMemo} from "react";
 import styled from "styled-components";
 import { useRouter } from 'next/router';
 import Select from 'react-select'
+import Modal from 'react-modal';
 
 const AppLoaderPageContainer = styled.div`
   height: 100%;
@@ -60,14 +61,89 @@ const styles = {
     })
 }
 
+type TXModalProps = {
+    onResult: (result: boolean) => void,
+    TXData?: any,
+}
+
+const Button = styled.button`
+  
+`
+
+const TXModal = ({ onResult, TXData }: TXModalProps) => {
+    const style = {
+        overlay: {
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.05)'
+        } as React.CSSProperties,
+        content: {
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: "translate(-50%, -50%)",
+            background: 'black',
+            overflow: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            borderRadius: '4px',
+            outline: 'none',
+            padding: '20px',
+            color: "white",
+            height: "200px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexDirection: "column",
+        } as React.CSSProperties
+    }
+
+    const data = TXData ? TXData.params[0] : undefined;
+    return (
+        <Modal
+            isOpen={!!TXData}
+            onRequestClose={() => onResult(false)}
+            contentLabel="TXModal"
+            style={style}
+            ariaHideApp={false}
+        >
+            {
+                data ? (
+                    <div>
+                        <div>
+                            {`From: ${data.from}`}
+                        </div>
+                        <div>
+                            {`To: ${data.to}`}
+                        </div>
+                        <div>
+                            {`Value: ${data.to}`}
+                        </div>
+                        <div>
+                            <Button onClick={() => onResult(true)}>
+                                accept
+                            </Button>
+                            <Button onClick={() => onResult(false)}>
+                                decline
+                            </Button>
+                        </div>
+                    </div>
+                ) : null
+            }
+        </Modal>
+    )
+}
+
 const DappBrowser = ({ url }: { url: string }) => {
     const iframeRef = useRef<HTMLIFrameElement | null>(null);
     const [option, setOption] = useState(options[0]);
     const dappURL = useMemo(() => new URL(url), [url]);
+    const [ TXData, setTXData ] = useState<any | undefined>();
 
     const handleAccountChange = useCallback(value => {
         if (iframeRef.current && iframeRef.current.contentWindow) {
-            console.log("sending new account to dapp")
             iframeRef.current.contentWindow.postMessage({
                 "jsonrpc": "2.0",
                 "method": "accountsChanged",
@@ -85,7 +161,7 @@ const DappBrowser = ({ url }: { url: string }) => {
             iframeRef.current.src = dappURL.toString();
         }
 
-        const ws = new WebSocket(`wss://ropsten.infura.io/ws/v3/${PROJECT_ID}`);
+        const ws = new WebSocket(`wss://mainnet.infura.io/ws/v3/${PROJECT_ID}`);
         ws.onopen = () => {
             console.log("connected to Infura node")
         }
@@ -120,14 +196,7 @@ const DappBrowser = ({ url }: { url: string }) => {
                         break;
                     }
                     case "eth_sendTransaction": {
-                        const txData = data.params[0];
-
-                        console.log("TX REQUEST: ", txData);
-                        event.source.postMessage({
-                            "id": data.id,
-                            "jsonrpc": "2.0",
-                            "result": "0xcff6d91d1693abe876c25ba03a58bc6ca693078b3a90e836f656e0dddb08a4cd"
-                        }, event.origin);
+                        setTXData(data);
                         break;
                     }
                     default: {
@@ -138,9 +207,48 @@ const DappBrowser = ({ url }: { url: string }) => {
         });
     }, [url])
 
-    console.log(option)
+    function generateTxID(length: number) {
+        const result = [];
+        const characters = "0123456789abcdef";
+        const charactersLength = characters.length;
+        for ( let i = 0; i < length; i++ ) {
+            result.push(characters.charAt(Math.floor(Math.random() * charactersLength)));
+        }
+        return "0x" + result.join('');
+    }
+
+    const handleResult = useCallback((result: boolean) => {
+        if (!TXData) {
+            return;
+        }
+        if (iframeRef.current && iframeRef.current.contentWindow) {
+            if (result) {
+                iframeRef.current.contentWindow.postMessage({
+                    "id": TXData.id,
+                    "jsonrpc": "2.0",
+                    "result": generateTxID(64),
+                }, dappURL.origin);
+            } else {
+                iframeRef.current.contentWindow.postMessage({
+                    "id": TXData.id,
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": 3,
+                        "message": "Transaction declined",
+                        "data": [{
+                            "code": 104,
+                            "message": 'Rejected'
+                        }]
+                    }
+                }, dappURL.origin);
+            }
+        }
+        setTXData(undefined);
+    }, [setTXData, TXData]);
+
     return (
         <AppLoaderPageContainer>
+            <TXModal onResult={handleResult} TXData={TXData} />
             <DappBrowserTopBar>
                 Ledger DAPP Browser test tool
                 <Select
