@@ -22,7 +22,7 @@ function DebugApp() {
             })
         );
 
-        const receiveMessage = (event) => {
+        const receiveMessage = (event: MessageEvent) => {
             if (event.origin !== window.location.origin) {
                 console.log("event: ", event);
                 const serverAndClient = clientRef.current;
