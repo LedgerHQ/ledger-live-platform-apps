@@ -15,7 +15,7 @@ function DebugApp() {
             new JSONRPCClient((request) => {
                 console.log("sending request: ", request);
                 try {
-                    window.postMessage(JSON.stringify(request), "*")
+                    window.parent.postMessage(JSON.stringify(request), "*")
                     return Promise.resolve();
                 } catch (error) {
                     return Promise.reject(error);
@@ -34,7 +34,7 @@ function DebugApp() {
         }
 
         window.addEventListener("message", receiveMessage, false);
-
+        return () => window.removeEventListener("message", receiveMessage);
     }, []);
 
     const getAccount = useCallback(async () => {
