@@ -13,6 +13,7 @@ function DebugApp() {
         clientRef.current = new JSONRPCServerAndClient(
             new JSONRPCServer(),
             new JSONRPCClient((request) => {
+                console.log("sending request: ", request);
                 try {
                     window.postMessage(JSON.stringify(request), "*")
                     return Promise.resolve();
