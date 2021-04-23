@@ -35,7 +35,7 @@ const ToolBar = styled.div`
     padding: 8px 6px;
 `
 const Output = styled.pre`
-    color: #eee;
+    color: ${(props: { isError: boolean }) => props.isError ? 'red': '#eee'};
     font-size: 12px;
 `
 
@@ -49,6 +49,7 @@ const ACTIONS = [
 function DebugApp() {
     const api = useRef<LedgerLiveApi | null>(null);
     const [lastAnswer, setLastAnswer] = useState<any>(null);
+    const [isError, setIsError] = useState<any>(false);
     const [method, setMethod] = useState<any>(ACTIONS[0]);
     const [accounts, setAccounts] = useState<any>([]);
     const [account, setAccount] = useState<any>(null);
@@ -87,14 +88,22 @@ function DebugApp() {
                     action = Promise.resolve();
             }
 
-            const result = await action;
-            setLastAnswer(result);
-            if (method.value === "account.list") {
-                setAccounts(result);
-                if (result.length) {
-                    setAccount(result[0])
+            try {
+                const result = await action;
+                setIsError(false);
+                setLastAnswer(result);
+                if (method.value === "account.list") {
+                    setAccounts(result);
+                    if (result.length) {
+                        setAccount(result[0])
+                    }
                 }
+            } catch (err) {
+                setLastAnswer({ message: err.message });
+                console.log(err);
+                setIsError(true);
             }
+
         }
     }, [method, account, rawPayload])
 
@@ -152,7 +161,7 @@ function DebugApp() {
                 <button onClick={execute}>EXECUTE</button>
             </ToolBar>
 
-            <Output>{JSON.stringify(lastAnswer, null, 2)}</Output>
+            <Output isError={isError}>{JSON.stringify(lastAnswer, null, 2)}</Output>
         </AppLoaderPageContainer>
     );
 }
