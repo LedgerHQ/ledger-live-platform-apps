@@ -15,7 +15,7 @@ function DebugApp() {
             new JSONRPCClient((request) => {
                 console.log("sending request: ", request);
                 try {
-                    window.parent.postMessage(JSON.stringify(request), "*")
+                    window.parent.postMessage(JSON.stringify(request), "*");
                     return Promise.resolve();
                 } catch (error) {
                     return Promise.reject(error);
@@ -41,7 +41,7 @@ function DebugApp() {
         const serverAndClient = clientRef.current;
         if (serverAndClient) {
             const answer = await serverAndClient.request("account.list");
-            console.log("answer: ", answer)
+            console.log("answer: ", answer);
         }
     }, []);
 
