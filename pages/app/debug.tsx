@@ -46,7 +46,7 @@ const ACTIONS = [
     { value: "transaction.sign", label: "Sign Transaction" },
 ];
 
-function DebugApp() {
+export default function DebugApp() {
     const api = useRef<LedgerLiveApi | null>(null);
     const [lastAnswer, setLastAnswer] = useState<any>(null);
     const [isError, setIsError] = useState<any>(false);

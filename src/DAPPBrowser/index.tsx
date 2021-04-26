@@ -1,18 +1,65 @@
-import React, {useCallback, useRef, useState} from "react";
-import styled from "styled-components";
+import React from "react";
+import styled, { keyframes } from "styled-components";
 import {AccountSelector} from "./AccountSelector";
+import LedgerLiveApi from '../../lib/LedgerLiveApiSdk';
+import WindowMessageTransport from '../../lib/WindowMessageTransport';
 
-import { accounts as mockAccounts } from "./mocks";
-import {JSONRPCServer} from "json-rpc-2.0";
-import {LedgerAPI} from "./LedgerAPI";
+
+// import { accounts as mockAccounts } from "./mocks";
 import {SmartWebsocket} from "./SmartWebsocket";
 import {Account} from "./types";
+import CSSTransition from "react-transition-group/CSSTransition";
+
+const loading = keyframes`
+  0% { opacity:0.8; }
+  50% { opacity:0.4; }
+  100% { opacity:0.8; }
+`;
 
 const AppLoaderPageContainer = styled.div`
   height: 100%;
   display: flex;
   flex-direction: column;
 `;
+
+const Loader = styled.div`
+  animation: ${loading} 1s ease-in-out infinite;
+`
+
+const Overlay = styled.div`
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: black;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  
+  &.overlay-enter {
+    opacity: 1;
+  }
+  &.overlay-enter-active {
+    opacity: 0;
+    transition: opacity 300ms;
+  }
+  &.overlay-enter-done {
+    display: none;
+    opacity: 0;
+  }
+  &.overlay-exit {
+    opacity: 0;
+  }
+  &.overlay-exit-active {
+    opacity: 1;
+    transition: opacity 200ms;
+  }
+  &.overlay-exit-done {
+    opacity: 1;
+  }
+`
 
 const DappBrowserTopBar = styled.div`
   box-sizing: border-box;
@@ -25,14 +72,15 @@ const DappBrowserTopBar = styled.div`
   justify-content: space-between;
 `;
 
-const DappIframe = styled.iframe.attrs(({ visible }) => ({
-    style: {
-        opacity: visible ? 1 : 0,
-    }
-}))`
+const DappContainer = styled.div`
+  width: 100%;
+  flex: 1;
+  position: relative;
+`;
+
+const DappIframe = styled.iframe`
     width: 100%;
-    transition: opacity ease-out 300ms;
-    flex: 1;
+    height: 100%;
     border: 0;
 `;
 
@@ -47,19 +95,20 @@ type DAPPBrowserState = {
     accounts: Account[],
     selectedAccount: Account | undefined,
     clientLoaded: boolean,
+    fetchingAccounts: boolean,
 }
 
 const initialState = {
     accounts: [],
     selectedAccount: undefined,
     clientLoaded: false,
+    fetchingAccounts: false,
 }
 
 export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserState> {
-    jsonRPC: JSONRPCServer;
-    ledgerAPI: LedgerAPI;
+    ledgerAPI: LedgerLiveApi;
     websocket: SmartWebsocket;
-    iframeRef = React.createRef<HTMLIFrameElement | null>();
+    iframeRef = React.createRef<HTMLIFrameElement>();
 
 
     constructor(props: DAPPBrowserProps) {
@@ -69,18 +118,10 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
         this.receiveDAPPMessage = this.receiveDAPPMessage.bind(this);
         this.setClientLoaded = this.setClientLoaded.bind(this);
         this.selectAccount = this.selectAccount.bind(this);
+        this.fetchAccounts = this.fetchAccounts.bind(this);
 
         this.websocket = new SmartWebsocket(props.nodeUrl);
-        this.ledgerAPI = new LedgerAPI();
-        this.jsonRPC = new JSONRPCServer();
-
-        this.jsonRPC.addMethod("eth_requestAccounts", async () => {
-            return this.state.selectedAccount ? [this.state.selectedAccount.address] : []
-        })
-
-        this.jsonRPC.addMethod("eth_accounts", async () => {
-            return this.state.selectedAccount ? [this.state.selectedAccount.address] : []
-        })
+        this.ledgerAPI = new LedgerLiveApi(new WindowMessageTransport());
     }
 
     private async receiveDAPPMessage(event: MessageEvent) {
@@ -107,33 +148,40 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
                     }, event.origin);
                     break;
                 }
-                // this.state.selectedAccount ? [this.state.selectedAccount.address] : []
+                case "eth_sendTransaction": {
+                    console.log("tx request: ", data)
+                    break;
+                }
                 default: {
-                    this.websocket.send(data);                }
+                    this.websocket.send(data);
+                }
             }
-
-            const answer = await this.jsonRPC.receive(data);
-            console.log({answer});
-            return;
-
-            if (answer.error && answer.error.code === -32601) {
-                this.websocket.send(data);
-            }
-            event.source.postMessage(answer, event.origin);
         }
+    }
+
+    async fetchAccounts() {
+        this.setState({
+            fetchingAccounts: true,
+        });
+        const accounts = await this.ledgerAPI.listAccounts();
+        this.setState({
+            accounts: accounts,
+            selectedAccount: accounts.length > 0 ? accounts[0] : undefined,
+            fetchingAccounts: false,
+        })
     }
 
     componentDidMount() {
         const dappURL = new URL(this.props.dappUrl);
 
-        this.setState({
-            accounts: mockAccounts,
-            selectedAccount: mockAccounts[0],
-        })
+
+
+        this.ledgerAPI.connect();
+        void this.fetchAccounts();
+
         window.addEventListener("message", this.receiveDAPPMessage, false);
         this.websocket.on("message", message => {
-            if (this.iframeRef.current && "contentWindow" in this.iframeRef.current) {
-                console.log("from infura: ", message);
+            if (this.iframeRef.current !== null && this.iframeRef.current["contentWindow"]) {
                 this.iframeRef.current.contentWindow.postMessage(message, dappURL.origin);
             }
         });
@@ -173,6 +221,7 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
             accounts,
             selectedAccount,
             clientLoaded,
+            fetchingAccounts,
         } = this.state;
 
         const {
@@ -183,18 +232,36 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
             <AppLoaderPageContainer>
                 <DappBrowserTopBar>
                     Ledger DAPP Browser
-                    <AccountSelector
-                        accounts={accounts}
-                        onAccountChange={this.selectAccount}
-                        selectedAccount={selectedAccount}
-                    />
+                    {
+                        accounts.length > 0 ? (
+                            <AccountSelector
+                                accounts={accounts}
+                                onAccountChange={this.selectAccount}
+                                selectedAccount={selectedAccount}
+                            />
+                        ) : null
+                    }
                 </DappBrowserTopBar>
-                <DappIframe
-                    visible={clientLoaded}
-                    ref={this.iframeRef}
-                    src={dappUrl}
-                    onLoad={this.setClientLoaded}
-                />
+                <DappContainer>
+                    <CSSTransition in={clientLoaded} timeout={300} classNames="overlay">
+                        <Overlay>
+                            <Loader>
+                                {
+                                    fetchingAccounts ? "Loading accounts ..." : accounts.length === 0 ? "You don't have any accounts" : "Loading DAPP ..."
+                                }
+                            </Loader>
+                        </Overlay>
+                    </CSSTransition>
+                    {
+                        accounts.length > 0 ? (
+                            <DappIframe
+                                ref={this.iframeRef}
+                                src={dappUrl}
+                                onLoad={this.setClientLoaded}
+                            />
+                        ) : null
+                    }
+                </DappContainer>
             </AppLoaderPageContainer>
         )
     }

@@ -31,7 +31,7 @@ const styles = {
 
 type AccountSelectorProps = {
     accounts: Account[],
-    onAccountChange: (Account) => void,
+    onAccountChange: (account: Account | undefined) => void,
     selectedAccount: Account | undefined,
 };
 
@@ -49,8 +49,8 @@ export function AccountSelector({ accounts, onAccountChange, selectedAccount }: 
     const options = useMemo(() => accounts.map(account => fromAccountToOption(account)), [accounts]);
     const value = useMemo(() => selectedAccount ? fromAccountToOption(selectedAccount) : undefined, [selectedAccount]);
 
-    const handleOnChange = useCallback((option: Option) => {
-        const newSelectedAccount = accounts.find(account => account.address === option.value);
+    const handleOnChange = useCallback((option: Option | null) => {
+        const newSelectedAccount = option ? accounts.find(account => account.address === option.value) : undefined;
         onAccountChange(newSelectedAccount);
     }, [accounts, onAccountChange])
 
