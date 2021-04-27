@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import {useRouter} from 'next/router';
 import {DAPPBrowser} from "../../src/DAPPBrowser";
 
-const PROJECT_ID = "a1664f14bbf54437acd24a79a600e3cc"
+const PROJECT_ID = "dd8953fc6841422dade12653678eadd3"
 const nodeUrl = `wss://mainnet.infura.io/ws/v3/${PROJECT_ID}`
 
 function DappBrowserPage() {

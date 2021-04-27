@@ -11,13 +11,14 @@ export default class LedgerLiveApi {
     }
 
     connect() {
-        this.serverAndClient = new JSONRPCServerAndClient(
+        const serverAndClient = new JSONRPCServerAndClient(
             new JSONRPCServer(),
             new JSONRPCClient((payload) => this.transport.send(payload))
         );
 
-        this.transport.onMessage = (payload) => this.serverAndClient?.receiveAndSend(payload);
+        this.transport.onMessage = (payload) => serverAndClient.receiveAndSend(payload);
         this.transport.connect();
+        this.serverAndClient = serverAndClient;
     }
 
     disconnect() {
@@ -28,18 +29,30 @@ export default class LedgerLiveApi {
     /** Legder Live Methods */
 
     listAccounts() {
-        return this.serverAndClient?.request('account.list'); 
+        if (!this.serverAndClient) {
+            throw new Error("Ledger Live API not connected");
+        }
+        return this.serverAndClient.request('account.list');
     }
 
     getAccount(accountId: string) {
-        return this.serverAndClient?.request('account.get', { accountId }); 
+        if (!this.serverAndClient) {
+            throw new Error("Ledger Live API not connected");
+        }
+        return this.serverAndClient.request('account.get', { accountId });
     }
 
     receiveAccount(accountId: string) {
-        return this.serverAndClient?.request('account.receive', { accountId }); 
+        if (!this.serverAndClient) {
+            throw new Error("Ledger Live API not connected");
+        }
+        return this.serverAndClient.request('account.receive', { accountId });
     }
 
     signTransaction(accountId: string, transaction: Object) {
-        return this.serverAndClient?.request('transaction.sign', { accountId, transaction }); 
+        if (!this.serverAndClient) {
+            throw new Error("Ledger Live API not connected");
+        }
+        return this.serverAndClient.request('transaction.sign', { accountId, transaction });
     }
 }

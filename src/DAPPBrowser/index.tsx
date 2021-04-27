@@ -9,6 +9,7 @@ import WindowMessageTransport from '../../lib/WindowMessageTransport';
 import {SmartWebsocket} from "./SmartWebsocket";
 import {Account} from "./types";
 import CSSTransition from "react-transition-group/CSSTransition";
+import {convertEthToLiveTX} from "./helper";
 
 const loading = keyframes`
   0% { opacity:0.8; }
@@ -129,7 +130,6 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
 
         if (event.origin === dappURL.origin && event.source && !(event.source instanceof MessagePort) && !(event.source instanceof ServiceWorker)) {
             const data = event.data;
-            console.log("RECEIVED FROM DAPP: ", data)
 
             switch (data.method) {
                 case "eth_requestAccounts": {
@@ -149,7 +149,15 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
                     break;
                 }
                 case "eth_sendTransaction": {
-                    console.log("tx request: ", data)
+                    const ethTX = data.params[0];
+                    const tx = convertEthToLiveTX(ethTX);
+                    console.log(ethTX, this.state.accounts);
+                    const fromAccount = this.state.accounts.find(account => account.address === ethTX.from);
+                    if (fromAccount) {
+                        this.ledgerAPI.signTransaction(fromAccount.id, tx).then(signedTX => {
+                            console.log({signedTX});
+                        });
+                    }
                     break;
                 }
                 default: {
@@ -164,17 +172,23 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
             fetchingAccounts: true,
         });
         const accounts = await this.ledgerAPI.listAccounts();
+        const filteredAccounts = accounts
+            .filter((account: any) => account.currency.id === "ethereum")
+            .map((account: any) => ({
+                id: account.id,
+                name: account.name,
+                address: account.freshAddress.toLowerCase(),
+            }))
+
         this.setState({
-            accounts: accounts,
-            selectedAccount: accounts.length > 0 ? accounts[0] : undefined,
+            accounts: filteredAccounts,
+            selectedAccount: filteredAccounts.length > 0 ? filteredAccounts[0] : undefined,
             fetchingAccounts: false,
         })
     }
 
     componentDidMount() {
         const dappURL = new URL(this.props.dappUrl);
-
-
 
         this.ledgerAPI.connect();
         void this.fetchAccounts();
