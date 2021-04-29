@@ -73,7 +73,7 @@ export default function DebugApp() {
                     action = api.current.getAccount(account.id);
                     break;
                 case "account.receive":
-                    action = api.current.receiveAccount(account.id);
+                    action = api.current.receive(account.id);
                     break;
                 case "transaction.sign":
                     try {

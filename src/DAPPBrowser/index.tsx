@@ -2,6 +2,7 @@ import React from "react";
 import styled, { keyframes } from "styled-components";
 import {AccountSelector} from "./AccountSelector";
 import LedgerLiveApi from '../../lib/LedgerLiveApiSdk';
+import LedgerLiveApiMock from '../../lib/LedgerLiveApiSdkMock';
 import WindowMessageTransport from '../../lib/WindowMessageTransport';
 
 
@@ -90,6 +91,7 @@ type DAPPBrowserProps = {
     dappName: string,
     pluginName: string,
     nodeUrl: string,
+    mock?: boolean,
 }
 
 type DAPPBrowserState = {
@@ -107,7 +109,7 @@ const initialState = {
 }
 
 export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserState> {
-    ledgerAPI: LedgerLiveApi;
+    ledgerAPI: LedgerLiveApi | LedgerLiveApiMock;
     websocket: SmartWebsocket;
     iframeRef = React.createRef<HTMLIFrameElement>();
 
@@ -122,7 +124,7 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
         this.fetchAccounts = this.fetchAccounts.bind(this);
 
         this.websocket = new SmartWebsocket(props.nodeUrl);
-        this.ledgerAPI = new LedgerLiveApi(new WindowMessageTransport());
+        this.ledgerAPI = props.mock ? new LedgerLiveApiMock() : new LedgerLiveApi(new WindowMessageTransport())
     }
 
     private async receiveDAPPMessage(event: MessageEvent) {
@@ -154,9 +156,27 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
                     console.log(ethTX, this.state.accounts);
                     const fromAccount = this.state.accounts.find(account => account.address === ethTX.from);
                     if (fromAccount) {
-                        this.ledgerAPI.signTransaction(fromAccount.id, tx).then(signedTX => {
-                            console.log({signedTX});
-                        });
+                        try {
+                            const txId = await this.ledgerAPI.signTransaction(fromAccount.id, tx)
+                            event.source.postMessage({
+                                "id": data.id,
+                                "jsonrpc": "2.0",
+                                "result": txId,
+                            }, event.origin);
+                        } catch (error) {
+                            event.source.postMessage({
+                                "id": data.id,
+                                "jsonrpc": "2.0",
+                                "error": {
+                                    "code": 3,
+                                    "message": "Transaction declined",
+                                    "data": [{
+                                        "code": 104,
+                                        "message": "Rejected"
+                                    }]
+                                }
+                            }, event.origin);
+                        }
                     }
                     break;
                 }

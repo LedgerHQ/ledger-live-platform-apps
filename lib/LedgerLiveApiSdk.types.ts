@@ -15,3 +15,12 @@ export type EthereumTransaction = {
     gasPrice?: string,
     gasLimit?: string,
 }
+
+export type Account = {
+    id: string,
+    name: string,
+    freshAddress: string,
+    currency: {
+        id: string,
+    }
+}

@@ -9,7 +9,9 @@ function DappBrowserPage() {
     const [mounted, setMounted] = useState(false);
     const router = useRouter();
 
-    const { url } = router.query;
+    const { url, mock } = router.query;
+
+    const isMock = !Array.isArray(mock) && mock === "true"
 
     useEffect(() => {
         setMounted(true);
@@ -24,6 +26,7 @@ function DappBrowserPage() {
                     dappUrl={String(url)}
                     pluginName="paraswap"
                     nodeUrl={nodeUrl}
+                    mock={isMock}
                 />
             ) : null
         );

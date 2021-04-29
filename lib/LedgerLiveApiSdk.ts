@@ -42,7 +42,7 @@ export default class LedgerLiveApi {
         return this.serverAndClient.request('account.get', { accountId });
     }
 
-    receiveAccount(accountId: string) {
+    receive(accountId: string) {
         if (!this.serverAndClient) {
             throw new Error("Ledger Live API not connected");
         }
