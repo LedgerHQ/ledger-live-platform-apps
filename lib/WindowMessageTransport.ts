@@ -40,7 +40,6 @@ export default class WindowMessageTransport implements Transport {
   }
 
   send = (response: string) => {
-    mylog(["WindowMessageTransport - send response", response]);
     try {
       this.target.top.postMessage(JSON.stringify(response), "*")
       return Promise.resolve();
