@@ -10,12 +10,14 @@ export default class WindowMessageTransport implements Transport {
 
   connect = () => {
     this.target.addEventListener("message", this._onMessageEvent, false);
+    //@ts-ignore (FIXME)
     this.target.document?.addEventListener("message", this._onMessageEvent, false);
   }
 
   disconnect = () => {
     this.target.removeEventListener("message", this._onMessageEvent);
-    this.target.document?.addEventListener("message", this._onMessageEvent, false);
+    //@ts-ignore (FIXME)
+    this.target.document?.removeEventListener("message", this._onMessageEvent, false);
   }
 
   _onMessageEvent = (event: MessageEvent) => {
