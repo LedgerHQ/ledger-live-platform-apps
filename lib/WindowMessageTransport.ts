@@ -10,11 +10,12 @@ export default class WindowMessageTransport implements Transport {
 
   connect = () => {
     this.target.addEventListener("message", this._onMessageEvent, false);
-
+    this.target.document?.addEventListener("message", this._onMessageEvent, false);
   }
 
   disconnect = () => {
     this.target.removeEventListener("message", this._onMessageEvent);
+    this.target.document?.addEventListener("message", this._onMessageEvent, false);
   }
 
   _onMessageEvent = (event: MessageEvent) => {
@@ -39,6 +40,7 @@ export default class WindowMessageTransport implements Transport {
   }
 
   send = (response: string) => {
+    mylog(["WindowMessageTransport - send response", response]);
     try {
       this.target.top.postMessage(JSON.stringify(response), "*")
       return Promise.resolve();
