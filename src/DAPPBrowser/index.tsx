@@ -132,8 +132,8 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
 
         if (event.origin === dappURL.origin
             && event.source
-            && !(window.MessagePort && event.source instanceof window.MessagePort)
-            && !(window.ServiceWorker && event.source instanceof window.ServiceWorker)) {
+            && window.MessagePort && !(event.source instanceof window.MessagePort)
+            && window.ServiceWorker && !(event.source instanceof window.ServiceWorker)) {
             const data = event.data;
 
             switch (data.method) {
