@@ -130,7 +130,10 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
     private async receiveDAPPMessage(event: MessageEvent) {
         const dappURL = new URL(this.props.dappUrl);
 
-        if (event.origin === dappURL.origin && event.source && !(event.source instanceof MessagePort) && !(event.source instanceof ServiceWorker)) {
+        if (event.origin === dappURL.origin
+            && event.source
+            && !(window.MessagePort && event.source instanceof window.MessagePort)
+            && !(window.ServiceWorker && event.source instanceof window.ServiceWorker)) {
             const data = event.data;
 
             switch (data.method) {
