@@ -24,3 +24,7 @@ export type Account = {
         id: string,
     }
 }
+
+export type SignedTransaction = {
+
+}

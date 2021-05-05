@@ -56,10 +56,14 @@ export default function DebugApp() {
     const [rawPayload, setRawPayload] = useState<any>(null);
 
     useEffect(() => {
-        api.current = new LedgerLiveApi(new WindowMessageTransport());
+        const llapi = new LedgerLiveApi(new WindowMessageTransport());
+        api.current = llapi;
 
-        api.current.connect();
-        return () => api.current?.disconnect();
+        llapi.connect();
+        return () => {
+            api.current = null;
+            void llapi.disconnect();
+        }
     }, []);
 
     const execute = useCallback(async () => {

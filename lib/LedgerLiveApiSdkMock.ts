@@ -1,4 +1,6 @@
 import data from "./mocks.json";
+import {SignedTransaction} from "./LedgerLiveApiSdk.types";
+import {generateRandomTxID} from "../src/DAPPBrowser/mocks";
 
 const { accounts } = data;
 
@@ -49,6 +51,14 @@ export default class LedgerLiveApiMock {
         if (!this.connected) {
             throw new Error("Ledger Live API not connected");
         }
+        return generateRandomTxID(109);
+    }
+
+    broadcastSignedTransaction(_signedTransaction: SignedTransaction) {
+        if (!this.connected) {
+            throw new Error("Ledger Live API not connected");
+        }
         return "";
     }
+
 }

@@ -2,8 +2,7 @@ import React, { useEffect, useState } from "react";
 import {useRouter} from 'next/router';
 import {DAPPBrowser} from "../../src/DAPPBrowser";
 
-const PROJECT_ID = "dd8953fc6841422dade12653678eadd3"
-const nodeUrl = `wss://mainnet.infura.io/ws/v3/${PROJECT_ID}`
+const nodeUrl = "wss://eth-mainnet.ws.alchemyapi.io/v2/0fyudoTG94QWC0tEtfJViM9v2ZXJuij2";
 
 function DappBrowserPage() {
     const [mounted, setMounted] = useState(false);

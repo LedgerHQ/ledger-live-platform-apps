@@ -41,7 +41,7 @@ export default class WindowMessageTransport implements Transport {
     return this.onMessage;
   }
 
-  send = (response: string) => {
+  send = (response: any) => {
     try {
       this.target.top.postMessage(JSON.stringify(response), "*")
       return Promise.resolve();

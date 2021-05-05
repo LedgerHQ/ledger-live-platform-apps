@@ -136,6 +136,9 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
             && window.ServiceWorker && !(event.source instanceof window.ServiceWorker)) {
             const data = event.data;
 
+            console.log(`MESSAGE FROM APP ${data.method}`, data)
+
+
             switch (data.method) {
                 case "eth_requestAccounts": {
                     event.source.postMessage({
@@ -156,15 +159,16 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
                 case "eth_sendTransaction": {
                     const ethTX = data.params[0];
                     const tx = convertEthToLiveTX(ethTX);
-                    console.log(ethTX, this.state.accounts);
                     const fromAccount = this.state.accounts.find(account => account.address === ethTX.from);
                     if (fromAccount) {
                         try {
-                            const txId = await this.ledgerAPI.signTransaction(fromAccount.id, tx)
+                            const signedTransaction = await this.ledgerAPI.signTransaction(fromAccount.id, tx);
+                            console.log("got signedTransaction from llApi", signedTransaction)
+                            const operation = await this.ledgerAPI.broadcastSignedTransaction(fromAccount.id, signedTransaction);
                             event.source.postMessage({
                                 "id": data.id,
                                 "jsonrpc": "2.0",
-                                "result": txId,
+                                "result": operation.hash,
                             }, event.origin);
                         } catch (error) {
                             event.source.postMessage({
@@ -227,6 +231,7 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
 
     componentWillUnmount() {
         window.removeEventListener("message", this.receiveDAPPMessage, false);
+        this.websocket.close();
     }
 
     selectAccount(account: Account | undefined) {
