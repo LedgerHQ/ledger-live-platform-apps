@@ -9,7 +9,7 @@ export interface Transport {
 
 export type EthereumTransaction = {
     family: "ethereum",
-    amount: string,
+    amount?: string,
     recipient: string,
     data?: string,
     gasPrice?: string,
