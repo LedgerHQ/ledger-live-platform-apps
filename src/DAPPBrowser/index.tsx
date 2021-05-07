@@ -5,8 +5,6 @@ import LedgerLiveApi from '../../lib/LedgerLiveApiSdk';
 import LedgerLiveApiMock from '../../lib/LedgerLiveApiSdkMock';
 import WindowMessageTransport from '../../lib/WindowMessageTransport';
 
-
-// import { accounts as mockAccounts } from "./mocks";
 import {SmartWebsocket} from "./SmartWebsocket";
 import {Account} from "./types";
 import CSSTransition from "react-transition-group/CSSTransition";
@@ -132,15 +130,17 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
 
         if (event.origin === dappURL.origin
             && event.source
-            && window.MessagePort && !(event.source instanceof window.MessagePort)
-            && window.ServiceWorker && !(event.source instanceof window.ServiceWorker)) {
+            // FIXME: Doesn't work on LLM
+            //&& (!window.MessagePort || !(event.source instanceof window.MessagePort))
+            //&& (!window.ServiceWorker || !(event.source instanceof window.ServiceWorker))
+            ) {
             const data = event.data;
 
             console.log(`MESSAGE FROM APP ${data.method}`, data)
 
-
             switch (data.method) {
                 case "eth_requestAccounts": {
+                    //@ts-ignore (FIXME)
                     event.source.postMessage({
                         "id": data.id,
                         "jsonrpc": "2.0",
@@ -149,6 +149,7 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
                     break;
                 }
                 case "eth_accounts": {
+                    //@ts-ignore (FIXME)
                     event.source.postMessage({
                         "id": data.id,
                         "jsonrpc": "2.0",
