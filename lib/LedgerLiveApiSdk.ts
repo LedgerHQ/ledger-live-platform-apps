@@ -1,6 +1,6 @@
 
 import { JSONRPCServerAndClient, JSONRPCClient, JSONRPCServer } from "json-rpc-2.0";
-import {SignedTransaction, Transport} from './LedgerLiveApiSdk.types';
+import {RequestAccountParams, SignedTransaction, Transport} from './LedgerLiveApiSdk.types';
 
 export default class LedgerLiveApi {
     private transport: Transport;
@@ -27,6 +27,13 @@ export default class LedgerLiveApi {
     }
 
     /** Legder Live Methods */
+
+    async requestAccount(params: RequestAccountParams) {
+        if (!this.serverAndClient) {
+            throw new Error("Ledger Live API not connected");
+        }
+        return this.serverAndClient.request('account.request', params);
+    }
 
     async listAccounts() {
         if (!this.serverAndClient) {

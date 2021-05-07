@@ -6,11 +6,11 @@ import LedgerLiveApiMock from '../../lib/LedgerLiveApiSdkMock';
 import WindowMessageTransport from '../../lib/WindowMessageTransport';
 
 
-// import { accounts as mockAccounts } from "./mocks";
 import {SmartWebsocket} from "./SmartWebsocket";
-import {Account} from "./types";
+import {Account} from "../../lib/LedgerLiveApiSdk.types";
 import CSSTransition from "react-transition-group/CSSTransition";
 import {convertEthToLiveTX} from "./helper";
+import {JSONRPCRequest, JSONRPCResponse} from "json-rpc-2.0";
 
 const loading = keyframes`
   0% { opacity:0.8; }
@@ -99,6 +99,7 @@ type DAPPBrowserState = {
     selectedAccount: Account | undefined,
     clientLoaded: boolean,
     fetchingAccounts: boolean,
+    connected: boolean,
 }
 
 const initialState = {
@@ -106,6 +107,7 @@ const initialState = {
     selectedAccount: undefined,
     clientLoaded: false,
     fetchingAccounts: false,
+    connected: false,
 }
 
 export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserState> {
@@ -127,51 +129,62 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
         this.ledgerAPI = props.mock ? new LedgerLiveApiMock() : new LedgerLiveApi(new WindowMessageTransport())
     }
 
-    private async receiveDAPPMessage(event: MessageEvent) {
+    private sendMessageToDAPP(message: JSONRPCResponse| JSONRPCRequest) {
         const dappURL = new URL(this.props.dappUrl);
 
-        if (event.origin === dappURL.origin
-            && event.source
-            && window.MessagePort && !(event.source instanceof window.MessagePort)
-            && window.ServiceWorker && !(event.source instanceof window.ServiceWorker)) {
+        if (this.iframeRef.current && this.iframeRef.current.contentWindow) {
+            this.iframeRef.current.contentWindow.postMessage(message, dappURL.origin);
+        }
+    }
+
+    private async receiveDAPPMessage(event: MessageEvent) {
+        const {
+            selectedAccount,
+        } = this.state;
+
+        const dappURL = new URL(this.props.dappUrl);
+
+        if (event.origin === dappURL.origin) {
             const data = event.data;
 
-            console.log(`MESSAGE FROM APP ${data.method}`, data)
+            console.log(`MESSAGE FROM APP ${data.method}`, data);
 
 
             switch (data.method) {
                 case "eth_requestAccounts": {
-                    event.source.postMessage({
+                    console.log(selectedAccount);
+                    this.sendMessageToDAPP({
                         "id": data.id,
                         "jsonrpc": "2.0",
-                        "result": this.state.selectedAccount ? [this.state.selectedAccount.address] : []
-                    }, event.origin);
+                        "result": selectedAccount ? [selectedAccount.address] : []
+                    });
                     break;
                 }
                 case "eth_accounts": {
-                    event.source.postMessage({
+                    console.log(selectedAccount);
+                    this.sendMessageToDAPP({
                         "id": data.id,
                         "jsonrpc": "2.0",
-                        "result": this.state.selectedAccount ? [this.state.selectedAccount.address] : []
-                    }, event.origin);
+                        "result": selectedAccount ? [selectedAccount.address] : []
+                    });
                     break;
                 }
                 case "eth_sendTransaction": {
                     const ethTX = data.params[0];
                     const tx = convertEthToLiveTX(ethTX);
-                    const fromAccount = this.state.accounts.find(account => account.address === ethTX.from);
+                    const fromAccount = this.state.accounts.find(account => account.address.toLowerCase() === ethTX.from.toLowerCase());
                     if (fromAccount) {
                         try {
                             const signedTransaction = await this.ledgerAPI.signTransaction(fromAccount.id, tx);
                             console.log("got signedTransaction from llApi", signedTransaction)
                             const operation = await this.ledgerAPI.broadcastSignedTransaction(fromAccount.id, signedTransaction);
-                            event.source.postMessage({
+                            this.sendMessageToDAPP({
                                 "id": data.id,
                                 "jsonrpc": "2.0",
                                 "result": operation.hash,
-                            }, event.origin);
+                            });
                         } catch (error) {
-                            event.source.postMessage({
+                            this.sendMessageToDAPP({
                                 "id": data.id,
                                 "jsonrpc": "2.0",
                                 "error": {
@@ -182,7 +195,7 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
                                         "message": "Rejected"
                                     }]
                                 }
-                            }, event.origin);
+                            });
                         }
                     }
                     break;
@@ -200,51 +213,47 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
         });
         const accounts = await this.ledgerAPI.listAccounts();
         const filteredAccounts = accounts
-            .filter((account: any) => account.currency.id === "ethereum")
-            .map((account: any) => ({
-                id: account.id,
-                name: account.name,
-                address: account.freshAddress.toLowerCase(),
-            }))
+            .filter((account: any) => account.currency === "ethereum");
 
         this.setState({
             accounts: filteredAccounts,
             selectedAccount: filteredAccounts.length > 0 ? filteredAccounts[0] : undefined,
             fetchingAccounts: false,
-        })
+        });
     }
 
     componentDidMount() {
-        const dappURL = new URL(this.props.dappUrl);
+        window.addEventListener("message", this.receiveDAPPMessage, false);
+        this.websocket.on("message", message => {
+            this.sendMessageToDAPP(message);
+        });
 
+        this.websocket.connect();
         this.ledgerAPI.connect();
         void this.fetchAccounts();
 
-        window.addEventListener("message", this.receiveDAPPMessage, false);
-        this.websocket.on("message", message => {
-            if (this.iframeRef.current !== null && this.iframeRef.current["contentWindow"]) {
-                this.iframeRef.current.contentWindow.postMessage(message, dappURL.origin);
-            }
+        this.setState({
+            connected: true,
         });
-        this.websocket.connect();
     }
 
     componentWillUnmount() {
+        this.setState({
+            connected: false,
+        })
         window.removeEventListener("message", this.receiveDAPPMessage, false);
         this.websocket.close();
     }
 
     selectAccount(account: Account | undefined) {
-        const dappURL = new URL(this.props.dappUrl);
-
-        if (this.iframeRef.current && this.iframeRef.current.contentWindow && account) {
-            this.iframeRef.current.contentWindow.postMessage({
+        if (account) {
+            this.sendMessageToDAPP({
                 "jsonrpc": "2.0",
                 "method": "accountsChanged",
                 "params": [
                     [account.address]
                 ]
-            }, dappURL.origin);
+            });
         }
 
         this.setState({
@@ -264,6 +273,7 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
             selectedAccount,
             clientLoaded,
             fetchingAccounts,
+            connected,
         } = this.state;
 
         const {
@@ -277,9 +287,9 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
                     {
                         accounts.length > 0 ? (
                             <AccountSelector
-                                accounts={accounts}
                                 onAccountChange={this.selectAccount}
                                 selectedAccount={selectedAccount}
+                                accounts={accounts}
                             />
                         ) : null
                     }
@@ -289,13 +299,13 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
                         <Overlay>
                             <Loader>
                                 {
-                                    fetchingAccounts ? "Loading accounts ..." : accounts.length === 0 ? "You don't have any accounts" : "Loading DAPP ..."
+                                    !connected ? "Connecting ..." : fetchingAccounts ? "Loading accounts ..." : accounts.length === 0 ? "You don't have any accounts" : "Loading DAPP ..."
                                 }
                             </Loader>
                         </Overlay>
                     </CSSTransition>
                     {
-                        accounts.length > 0 ? (
+                        connected && accounts.length > 0 ? (
                             <DappIframe
                                 ref={this.iframeRef}
                                 src={dappUrl}

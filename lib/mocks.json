@@ -1,28 +1,25 @@
 {
-  "accounts": [
+  "rawAccounts": [
     {
       "id": "eth:mock:account:1",
       "name": "Huge account",
-      "currency": {
-        "id": "ethereum"
-      },
-      "freshAddress": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+      "currency": "ethereum",
+      "balance": "0",
+      "address": "0x73bceb1cd57c711feac4224d062b0f6ff338501e"
     },
     {
       "id": "eth:mock:account:2",
       "name": "Big account",
-      "currency": {
-        "id": "ethereum"
-      },
-      "freshAddress": "0xc30b6c40fdbbf803d50bc414b3f2169b260435a1"
+      "currency": "ethereum",
+      "balance": "0",
+      "address": "0xc30b6c40fdbbf803d50bc414b3f2169b260435a1"
     },
     {
       "id": "eth:mock:account:2",
       "name": "Small account",
-      "currency": {
-        "id": "ethereum"
-      },
-      "freshAddress": "0x3f5953Bb897449aC2A6E1B52e70D9375053a55C3"
+      "currency": "ethereum",
+      "balance": "0",
+      "address": "0x3f5953Bb897449aC2A6E1B52e70D9375053a55C3"
     }
   ]
 }

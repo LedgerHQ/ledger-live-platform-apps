@@ -1,8 +1,14 @@
 import data from "./mocks.json";
-import {SignedTransaction} from "./LedgerLiveApiSdk.types";
+import {RequestAccountParams, SignedTransaction} from "./LedgerLiveApiSdk.types";
 import {generateRandomTxID} from "../src/DAPPBrowser/mocks";
+import {Account} from "./LedgerLiveApiSdk.types"
+import {deserializeAccount} from "./serialization/accounts";
 
-const { accounts } = data;
+const { rawAccounts } = data;
+
+const accounts = rawAccounts.map(deserializeAccount);
+
+
 
 export default class LedgerLiveApiMock {
     connected: boolean = false;
@@ -17,10 +23,15 @@ export default class LedgerLiveApiMock {
 
     /** Legder Live Methods */
 
+    async requestAccount(_params: RequestAccountParams): Promise<Account> {
+        return accounts[0];
+    }
+
     async listAccounts() {
         if (!this.connected) {
             throw new Error("Ledger Live API not connected");
         }
+        console.log({accounts})
         return accounts;
     }
 
@@ -44,7 +55,7 @@ export default class LedgerLiveApiMock {
         if (!account) {
             throw new Error("Account not found");
         }
-        return account.freshAddress;
+        return account.address;
     }
 
     async signTransaction(_accountId: string, _transaction: Object) {

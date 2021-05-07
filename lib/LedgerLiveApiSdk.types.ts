@@ -1,4 +1,6 @@
-export type MessageHandler = (payload: Object) => Promise<void>; 
+import BigNumber from "bignumber.js";
+
+export type MessageHandler = (payload: Object) => Promise<void>;
 
 export interface Transport {
     connect(): void;
@@ -16,15 +18,35 @@ export type EthereumTransaction = {
     gasLimit?: string,
 }
 
+export type SignedTransaction = {
+
+}
+
+export type Transaction = {
+
+}
+
+export type RawAccount = {
+    id: string,
+    name: string,
+    address: string,
+    currency: string,
+    balance: string,
+}
+
 export type Account = {
     id: string,
     name: string,
-    freshAddress: string,
-    currency: {
-        id: string,
-    }
+    address: string,
+    currency: string,
+    balance: BigNumber,
 }
 
-export type SignedTransaction = {
+export type Currency = {
+    id: string,
+}
 
+export type RequestAccountParams = {
+    currencies?: string[],
+    allowAddAccount?: boolean,
 }
