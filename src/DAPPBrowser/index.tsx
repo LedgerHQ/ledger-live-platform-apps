@@ -5,7 +5,6 @@ import LedgerLiveApi from '../../lib/LedgerLiveApiSdk';
 import LedgerLiveApiMock from '../../lib/LedgerLiveApiSdkMock';
 import WindowMessageTransport from '../../lib/WindowMessageTransport';
 
-
 import {SmartWebsocket} from "./SmartWebsocket";
 import {Account} from "../../lib/LedgerLiveApiSdk.types";
 import CSSTransition from "react-transition-group/CSSTransition";
@@ -149,10 +148,8 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
 
             console.log(`MESSAGE FROM APP ${data.method}`, data);
 
-
             switch (data.method) {
                 case "eth_requestAccounts": {
-                    console.log(selectedAccount);
                     this.sendMessageToDAPP({
                         "id": data.id,
                         "jsonrpc": "2.0",
@@ -161,7 +158,6 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
                     break;
                 }
                 case "eth_accounts": {
-                    console.log(selectedAccount);
                     this.sendMessageToDAPP({
                         "id": data.id,
                         "jsonrpc": "2.0",
