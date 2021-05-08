@@ -6,10 +6,10 @@ import LedgerLiveApiMock from '../../lib/LedgerLiveApiSdkMock';
 import WindowMessageTransport from '../../lib/WindowMessageTransport';
 
 import {SmartWebsocket} from "./SmartWebsocket";
-import {Account} from "../../lib/LedgerLiveApiSdk.types";
 import CSSTransition from "react-transition-group/CSSTransition";
 import {convertEthToLiveTX} from "./helper";
 import {JSONRPCRequest, JSONRPCResponse} from "json-rpc-2.0";
+import {Account} from "../../lib/types";
 
 const loading = keyframes`
   0% { opacity:0.8; }

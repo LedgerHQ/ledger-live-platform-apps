@@ -1,13 +1,13 @@
-import {EthereumTransaction} from "../../lib/LedgerLiveApiSdk.types";
-import BN from "bn.js";
+import {EthereumTransaction} from "../../lib/types";
+import { BigNumber } from "bignumber.js";
 
 export function convertEthToLiveTX(ethTX: any): EthereumTransaction {
     return {
         family: "ethereum",
-        amount: ethTX.amount !== undefined ? new BN(ethTX.value.replace("0x", ""), 16).toString(10) : "0",
+        amount: ethTX.amount !== undefined ? new BigNumber(ethTX.value.replace("0x", ""), 16) : new BigNumber(0),
         recipient: ethTX.to,
-        gasPrice: ethTX.gasPrice !== undefined ? new BN(ethTX.gasPrice.replace("0x", ""), 16).toString(10) : undefined,
-        gasLimit: ethTX.gas !== undefined ? new BN(ethTX.gas.replace("0x", ""), 16).toString(10) : undefined,
+        gasPrice: ethTX.gasPrice !== undefined ? new BigNumber(ethTX.gasPrice.replace("0x", ""), 16) : undefined,
+        gasLimit: ethTX.gas !== undefined ? new BigNumber(ethTX.gas.replace("0x", ""), 16) : undefined,
         data: ethTX.data,
     }
 }

@@ -1,12 +1,13 @@
 import data from "./mocks.json";
 import {RequestAccountParams, SignedTransaction} from "./LedgerLiveApiSdk.types";
 import {generateRandomTxID} from "../src/DAPPBrowser/mocks";
-import {Account} from "./LedgerLiveApiSdk.types"
-import {deserializeAccount} from "./serialization/accounts";
+import {Account, Currency} from "./types"
+import {deserializeAccount} from "./serializers";
 
-const { rawAccounts } = data;
+const { rawAccounts, rawCurrencies } = data;
 
 const accounts = rawAccounts.map(deserializeAccount);
+const currencies = rawCurrencies;
 
 
 
@@ -27,15 +28,22 @@ export default class LedgerLiveApiMock {
         return accounts[0];
     }
 
-    async listAccounts() {
+    async listCurrencies(): Promise<Currency[]> {
         if (!this.connected) {
             throw new Error("Ledger Live API not connected");
         }
-        console.log({accounts})
+
+        return currencies;
+    }
+
+    async listAccounts(): Promise<Account[]> {
+        if (!this.connected) {
+            throw new Error("Ledger Live API not connected");
+        }
         return accounts;
     }
 
-    async getAccount(accountId: string) {
+    async getAccount(accountId: string): Promise<Account> {
         if (!this.connected) {
             throw new Error("Ledger Live API not connected");
         }
@@ -47,7 +55,7 @@ export default class LedgerLiveApiMock {
         return account;
     }
 
-    async receive(accountId: string) {
+    async receive(accountId: string): Promise<string> {
         if (!this.connected) {
             throw new Error("Ledger Live API not connected");
         }

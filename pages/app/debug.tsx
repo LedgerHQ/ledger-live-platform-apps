@@ -70,6 +70,9 @@ export default function DebugApp() {
         if (api.current) {
             let action;
             switch(method.value) {
+                case "currency.list":
+                    action = api.current.listCurrencies();
+                    break;
                 case "account.list":
                     action = api.current.listAccounts();
                     break;
@@ -98,7 +101,9 @@ export default function DebugApp() {
                 setLastAnswer(result);
                 if (method.value === "account.list") {
                     setAccounts(result);
+                    //@ts-ignore (FIXME)
                     if (result.length) {
+                        //@ts-ignore (FIXME)
                         setAccount(result[0])
                     }
                 }

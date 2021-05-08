@@ -1,6 +1,9 @@
 
 import { JSONRPCServerAndClient, JSONRPCClient, JSONRPCServer } from "json-rpc-2.0";
 import {RequestAccountParams, SignedTransaction, Transport} from './LedgerLiveApiSdk.types';
+import {Account, Currency, Transaction} from "./types";
+import {deserializeAccount, serializeTransaction} from "./serializers";
+import {RawAccount} from "./rawTypes";
 
 export default class LedgerLiveApi {
     private transport: Transport;
@@ -28,44 +31,57 @@ export default class LedgerLiveApi {
 
     /** Legder Live Methods */
 
-    async requestAccount(params: RequestAccountParams) {
+    async requestAccount(params: RequestAccountParams): Promise<Account> {
         if (!this.serverAndClient) {
             throw new Error("Ledger Live API not connected");
         }
-        return this.serverAndClient.request('account.request', params);
+        const rawAccount = await this.serverAndClient.request('account.request', params);
+        return deserializeAccount(rawAccount);
     }
 
-    async listAccounts() {
+    async listAccounts(): Promise<Account[]> {
         if (!this.serverAndClient) {
             throw new Error("Ledger Live API not connected");
         }
-        return this.serverAndClient.request('account.list');
+        const rawAccounts = await this.serverAndClient.request('account.list');
+        return rawAccounts.map(deserializeAccount);
     }
 
-    async getAccount(accountId: string) {
+    async listCurrencies(): Promise<Currency[]> {
         if (!this.serverAndClient) {
             throw new Error("Ledger Live API not connected");
         }
-        return this.serverAndClient.request('account.get', { accountId });
+
+        return this.serverAndClient.request('currency.list');
     }
 
-    async receive(accountId: string) {
+    async getAccount(accountId: string): Promise<Account> {
+        if (!this.serverAndClient) {
+            throw new Error("Ledger Live API not connected");
+        }
+        const rawAccount = await this.serverAndClient.request('account.get', { accountId }) as RawAccount;
+        return deserializeAccount(rawAccount);
+    }
+
+    async receive(accountId: string): Promise<string> {
         if (!this.serverAndClient) {
             throw new Error("Ledger Live API not connected");
         }
         return this.serverAndClient.request('account.receive', { accountId });
     }
 
-    async signTransaction(accountId: string, transaction: Object): Promise<SignedTransaction> {
+    async signTransaction(accountId: string, transaction: Transaction): Promise<SignedTransaction> {
         if (!this.serverAndClient) {
             throw new Error("Ledger Live API not connected");
         }
-        console.log("calling signTransaction on live api", transaction)
 
-        return this.serverAndClient.request('transaction.sign', { accountId, transaction });
+        return this.serverAndClient.request('transaction.sign', {
+            accountId,
+            transaction: serializeTransaction(transaction),
+        });
     }
 
-    async broadcastSignedTransaction(accountId: string, signedTransaction: SignedTransaction) {
+    async broadcastSignedTransaction(accountId: string, signedTransaction: SignedTransaction): Promise<any> {
         if (!this.serverAndClient) {
             throw new Error("Ledger Live API not connected");
         }

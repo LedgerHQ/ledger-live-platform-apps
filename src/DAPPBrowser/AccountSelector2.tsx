@@ -1,5 +1,5 @@
 import React from "react";
-import {Account} from "../../lib/LedgerLiveApiSdk.types";
+import {Account} from "../../lib/types";
 import styled from "styled-components";
 
 type AccountSelectorProps = {

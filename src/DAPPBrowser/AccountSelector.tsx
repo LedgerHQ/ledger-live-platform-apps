@@ -1,6 +1,6 @@
 import Select from "react-select";
 import React, { useMemo, useCallback } from "react";
-import {Account} from "../../lib/LedgerLiveApiSdk.types";
+import {Account} from "../../lib/types";
 import {Option} from "react-select/src/filters";
 
 const styles = {
