@@ -41,6 +41,7 @@ const Output = styled.pre`
 
 const ACTIONS = [
     { value: "account.list", label: "List Accounts"},
+    { value: "currency.list", label: "List Currencies"},
     { value: "account.get", label: "Get Account"},
     { value: "account.receive", label: "Verify Address" },
     { value: "transaction.sign", label: "Sign Transaction" },

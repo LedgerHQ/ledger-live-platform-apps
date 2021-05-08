@@ -1,9 +1,10 @@
-import type {
+import {
     RawAccount,
     RawTransaction,
     RawEthereumTransaction,
+    RawBitcoinTransaction,
 } from "./rawTypes";
-import type {
+import {
     Account,
     Transaction,
     EthereumTransaction,
@@ -11,7 +12,6 @@ import type {
 } from "./types";
 
 import { BigNumber } from "bignumber.js";
-import {RawBitcoinTransaction} from "./rawTypes";
 
 export function serializeAccount(
     account: Account
