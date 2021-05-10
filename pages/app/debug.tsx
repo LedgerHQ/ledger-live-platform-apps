@@ -4,9 +4,13 @@ import Select from 'react-select'
 
 import LedgerLiveApi from '../../lib/LedgerLiveApiSdk';
 import WindowMessageTransport from '../../lib/WindowMessageTransport';
+import { deserializeTransaction } from '../../lib/serializers';
 
 const AppLoaderPageContainer = styled.div`
-  
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
 `;
 
 const Row = styled.div`
@@ -35,17 +39,25 @@ const ToolBar = styled.div`
     padding: 8px 6px;
 `
 const Output = styled.pre`
+    overflow: scroll;
+    margin: 0;
     color: ${(props: { isError: boolean }) => props.isError ? 'red': '#eee'};
     font-size: 12px;
 `
 
+const PAYLOAD_SIGN = { family: "ethereum", recipient: "XXX", amount: "1" };
+const PAYLOAD_BROADCAST = { signedTransaction: "YYY" };
+
 const ACTIONS = [
     { value: "account.list", label: "List Accounts"},
-    { value: "currency.list", label: "List Currencies"},
-    { value: "account.get", label: "Get Account"},
-    { value: "account.receive", label: "Verify Address" },
-    { value: "transaction.sign", label: "Sign Transaction" },
+    { value: "account.request", label: "Request Account", usePayload: true },
+    { value: "account.receive", label: "Verify Address", useAccount: true },
+    { value: "transaction.sign", label: "Sign Transaction", useAccount: true, usePayload: PAYLOAD_SIGN },
+    { value: "transaction.broadcast", label: "Broadcast Transaction", useAccount: true, usePayload: PAYLOAD_BROADCAST },
+    { value: "currency.list", label: "List Currencies", usePayload: true },
 ];
+
+const prettyJSON = (payload: any) => JSON.stringify(payload, null, 2);
 
 export default function DebugApp() {
     const api = useRef<LedgerLiveApi | null>(null);
@@ -54,8 +66,8 @@ export default function DebugApp() {
     const [method, setMethod] = useState<any>(ACTIONS[0]);
     const [accounts, setAccounts] = useState<any>([]);
     const [account, setAccount] = useState<any>(null);
-    const [rawPayload, setRawPayload] = useState<any>(null);
-
+    const [rawPayload, setRawPayload] = useState<any>("");
+    
     useEffect(() => {
         const llapi = new LedgerLiveApi(new WindowMessageTransport());
         api.current = llapi;
@@ -71,24 +83,45 @@ export default function DebugApp() {
         if (api.current) {
             let action;
             switch(method.value) {
-                case "currency.list":
-                    action = api.current.listCurrencies();
-                    break;
                 case "account.list":
                     action = api.current.listAccounts();
                     break;
-                case "account.get":
-                    action = api.current.getAccount(account.id);
+                case "account.request":
+                    try {
+                        const payload = rawPayload ? JSON.parse(rawPayload) : undefined;
+                        action = api.current.requestAccount(payload);
+                    } catch (error) {
+                        action = Promise.reject(error);
+                    }
                     break;
                 case "account.receive":
-                    action = api.current.receive(account.id);
+                    if (account) {
+                        action = api.current.receive(account.id);
+                    } else {
+                        action = Promise.reject(new Error("No accountId selected"));
+                    }
                     break;
                 case "transaction.sign":
                     try {
-                        const payload = JSON.parse(rawPayload);
-                        action = api.current.signTransaction(account.id, payload);
+                        const transaction = deserializeTransaction(JSON.parse(rawPayload));
+                        action = api.current.signTransaction(account.id, transaction);
                     } catch (error) {
-                        alert("Invalid JSON payload");
+                        action = Promise.reject(error);
+                    }
+                    break;
+                case "transaction.broadcast":
+                    try {
+                        const payload = JSON.parse(rawPayload);
+                        action = api.current.broadcastSignedTransaction(account.id, payload);
+                    } catch (error) {
+                        action = Promise.reject(error);
+                    }
+                    break;
+                case "currency.list":
+                    try {
+                        const payload = rawPayload ? JSON.parse(rawPayload) : undefined;
+                        action = api.current.listCurrencies(payload);
+                    } catch (error) {
                         action = Promise.reject(error);
                     }
                     break;
@@ -102,9 +135,7 @@ export default function DebugApp() {
                 setLastAnswer(result);
                 if (method.value === "account.list") {
                     setAccounts(result);
-                    //@ts-ignore (FIXME)
-                    if (result.length) {
-                        //@ts-ignore (FIXME)
+                    if (result instanceof Array && result.length) {
                         setAccount(result[0])
                     }
                 }
@@ -119,12 +150,14 @@ export default function DebugApp() {
 
     const handleMethodChange = useCallback((option) => {
         setMethod(option);
-
+        if (option && option.usePayload && option.usePayload !== true) {
+            setRawPayload(prettyJSON(option.usePayload))
+        }
     }, [setMethod]);
 
     const handleAccountChange = useCallback((option) => {
         setAccount(option);
-        console.log(option)
+        
     }, [setMethod]);
 
     const handlePayloadChange = useCallback((event) => {
@@ -136,7 +169,7 @@ export default function DebugApp() {
 
         try {
             const payload = JSON.parse(event.target.value);
-            setRawPayload(JSON.stringify(payload, null, 2));
+            setRawPayload(prettyJSON(payload));
         } catch (err) {}
     }, [setRawPayload]);
 
@@ -158,20 +191,21 @@ export default function DebugApp() {
                             options={accounts}
                             onChange={handleAccountChange}
                             getOptionValue={option => option.id}
-                            getOptionLabel={option => `${option.name} (${option.freshAddress})`}
+                            getOptionLabel={option => `${option.name} (${option.address})`}
                             value={account}
+                            isDisabled={!method.useAccount}
                         />
                     </Field>
 
                 </Row>
                 <Field>
                     Payload:
-                    <TextArea onChange={handlePayloadChange} onBlur={handlePayloadBlur} value={rawPayload}></TextArea>
+                    <TextArea onChange={handlePayloadChange} onBlur={handlePayloadBlur} value={rawPayload} disabled={!method.usePayload}></TextArea>
                 </Field>
                 <button onClick={execute}>EXECUTE</button>
             </ToolBar>
 
-            <Output isError={isError}>{JSON.stringify(lastAnswer, null, 2)}</Output>
+            <Output isError={isError}>{prettyJSON(lastAnswer)}</Output>
         </AppLoaderPageContainer>
     );
 }
