@@ -7,11 +7,13 @@ export interface Transport {
     send(payload: Object) : Promise<void>;
 }
 
-export type SignedTransaction = {
-
-}
 
 export type RequestAccountParams = {
     currencies?: string[],
     allowAddAccount?: boolean,
+}
+
+export type ListCurrenciesParams = {
+    name?: string,
+    ticker?: string,
 }

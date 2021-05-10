@@ -1,7 +1,7 @@
 import data from "./mocks.json";
-import {RequestAccountParams, SignedTransaction} from "./LedgerLiveApiSdk.types";
+import {RequestAccountParams} from "./LedgerLiveApiSdk.types";
 import {generateRandomTxID} from "../src/DAPPBrowser/mocks";
-import {Account, Currency} from "./types"
+import {Account, Currency, SignedTransaction} from "./types"
 import {deserializeAccount} from "./serializers";
 
 const { rawAccounts, rawCurrencies } = data;

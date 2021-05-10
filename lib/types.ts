@@ -48,3 +48,8 @@ export interface BitcoinTransaction extends TransactionCommon {
 export type Transaction =
     | EthereumTransaction
     | BitcoinTransaction;
+
+
+export type SignedTransaction = {
+
+}
