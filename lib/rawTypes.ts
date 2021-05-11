@@ -33,3 +33,10 @@ export interface RawBitcoinTransaction
 export type RawTransaction =
     | RawEthereumTransaction
     | RawBitcoinTransaction;
+
+export type RawSignedTransaction = {
+    operation: Object,
+    signature: string,
+    signatureRaw?: Object,
+    expirationDate: string | null,
+}

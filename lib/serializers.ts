@@ -1,17 +1,19 @@
+import { BigNumber } from "bignumber.js";
+
 import {
     RawAccount,
     RawTransaction,
     RawEthereumTransaction,
     RawBitcoinTransaction,
+    RawSignedTransaction,
 } from "./rawTypes";
 import {
     Account,
     Transaction,
     EthereumTransaction,
     BitcoinTransaction,
+    SignedTransaction,
 } from "./types";
-
-import { BigNumber } from "bignumber.js";
 
 export function serializeAccount(
     account: Account
@@ -128,5 +130,27 @@ export function deserializeTransaction(
             throw new Error(
                 `Can't deserialize transaction: family not supported`
             );
+    }
+}
+
+export function serializeSignedTransaction(
+    signedTansaction: SignedTransaction
+): RawSignedTransaction {
+    return {
+        operation: signedTansaction.operation,
+        signature: signedTansaction.signature,
+        expirationDate: signedTansaction.expirationDate ? signedTansaction.expirationDate.toString() : null,
+        signatureRaw: signedTansaction.signatureRaw,
+    }
+}
+
+export function deserializeSignedTransaction(
+    rawSignedTransaction: RawSignedTransaction
+): SignedTransaction {
+    return {
+        operation: rawSignedTransaction.operation || {},
+        signature: rawSignedTransaction.signature,
+        expirationDate: rawSignedTransaction.expirationDate ? new Date(rawSignedTransaction.expirationDate) : null,
+        signatureRaw: rawSignedTransaction.signatureRaw,
     }
 }

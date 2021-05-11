@@ -17,3 +17,7 @@ export type ListCurrenciesParams = {
     name?: string,
     ticker?: string,
 }
+
+export type SignTransactionParams = {
+    useApp?: string,
+}

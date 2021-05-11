@@ -70,14 +70,14 @@ export default class LedgerLiveApiMock {
         if (!this.connected) {
             throw new Error("Ledger Live API not connected");
         }
-        return generateRandomTxID(109);
+        return { operation: {}, signature: generateRandomTxID(109), expirationDate: null }
     }
 
-    broadcastSignedTransaction(_signedTransaction: SignedTransaction) {
+    async broadcastSignedTransaction(_accountId: string, _signedTransaction: SignedTransaction) {
         if (!this.connected) {
             throw new Error("Ledger Live API not connected");
         }
-        return "";
+        return generateRandomTxID(28);
     }
 
 }

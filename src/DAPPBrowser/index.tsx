@@ -173,11 +173,11 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
                         try {
                             const signedTransaction = await this.ledgerAPI.signTransaction(fromAccount.id, tx);
                             console.log("got signedTransaction from llApi", signedTransaction)
-                            const operation = await this.ledgerAPI.broadcastSignedTransaction(fromAccount.id, signedTransaction);
+                            const hash = await this.ledgerAPI.broadcastSignedTransaction(fromAccount.id, signedTransaction);
                             this.sendMessageToDAPP({
                                 "id": data.id,
                                 "jsonrpc": "2.0",
-                                "result": operation.hash,
+                                "result": hash,
                             });
                         } catch (error) {
                             this.sendMessageToDAPP({
