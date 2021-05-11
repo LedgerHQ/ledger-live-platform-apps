@@ -25,7 +25,11 @@ export default class WindowMessageTransport implements Transport {
       if (event.origin !== this.target.location.origin && event.data && typeof event.data === "string") {
         try {
           const payload = JSON.parse(event.data.toString());
-          this._onMessage(payload);
+
+          // TODO: find a better way to ensure message comes from LL
+          if (payload.jsonrpc) {
+            this._onMessage(payload);
+          }
         } catch (error) {
           this._onMessage(error);
         }
@@ -33,12 +37,12 @@ export default class WindowMessageTransport implements Transport {
     }
   }
 
-  set onMessage(handler: MessageHandler) {
+  set onMessage(handler: MessageHandler | undefined) {
     this._onMessage = handler;
   }
 
   get onMessage() {
-    return this.onMessage;
+    return this._onMessage;
   }
 
   send = (response: any) => {

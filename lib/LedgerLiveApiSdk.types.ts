@@ -3,7 +3,7 @@ export type MessageHandler = (payload: Object) => Promise<void>;
 export interface Transport {
     connect(): void;
     disconnect(): void;
-    onMessage: (handler: MessageHandler) => void; 
+    onMessage: MessageHandler | undefined; 
     send(payload: Object) : Promise<void>;
 }
 
