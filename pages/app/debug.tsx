@@ -4,7 +4,7 @@ import Select from 'react-select'
 
 import LedgerLiveApi from '../../lib/LedgerLiveApiSdk';
 import WindowMessageTransport from '../../lib/WindowMessageTransport';
-import { deserializeTransaction } from '../../lib/serializers';
+import { deserializeTransaction, deserializeSignedTransaction } from '../../lib/serializers';
 
 const AppLoaderPageContainer = styled.div`
   display: flex;
@@ -46,7 +46,7 @@ const Output = styled.pre`
 `
 
 const PAYLOAD_SIGN = { family: "ethereum", recipient: "XXX", amount: "1" };
-const PAYLOAD_BROADCAST = { signedTransaction: "YYY" };
+const PAYLOAD_BROADCAST = { operation: {}, signature: "YYY", expirationDate: null };
 
 const ACTIONS = [
     { value: "account.list", label: "List Accounts"},
@@ -109,10 +109,10 @@ export default function DebugApp() {
                         action = Promise.reject(error);
                     }
                     break;
-                case "transaction.broadcast":
-                    try {
-                        const payload = JSON.parse(rawPayload);
-                        action = api.current.broadcastSignedTransaction(account.id, payload);
+                    case "transaction.broadcast":
+                        try {
+                        const signedTransaction = deserializeSignedTransaction(JSON.parse(rawPayload));
+                        action = api.current.broadcastSignedTransaction(account.id, signedTransaction);
                     } catch (error) {
                         action = Promise.reject(error);
                     }

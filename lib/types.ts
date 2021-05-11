@@ -50,6 +50,12 @@ export type Transaction =
     | BitcoinTransaction;
 
 
-export type SignedTransaction = {
+// TODO: remove this from the LL api
+export type Operation = Object;
 
+export type SignedTransaction = {
+    operation: Operation,
+    signature: string,
+    signatureRaw?: Object,
+    expirationDate: Date | null,
 }
