@@ -1,6 +1,7 @@
 import React from "react";
 import styled, { keyframes } from "styled-components";
 import {AccountSelector} from "./AccountSelector";
+import {AccountRequest} from "./AccountRequest";
 import LedgerLiveApi from '../../lib/LedgerLiveApiSdk';
 import LedgerLiveApiMock from '../../lib/LedgerLiveApiSdkMock';
 import WindowMessageTransport from '../../lib/WindowMessageTransport';
@@ -62,7 +63,7 @@ const Overlay = styled.div`
   }
 `
 
-const DappBrowserTopBar = styled.div`
+const DappBrowserControlBar = styled.div`
   box-sizing: border-box;
   background-color: black;
   color: white;
@@ -71,12 +72,22 @@ const DappBrowserTopBar = styled.div`
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
+  order: 2;
+
+  @media only screen and (min-width: 600px) {
+    order: 1;
+  }
 `;
 
 const DappContainer = styled.div`
   width: 100%;
   flex: 1;
   position: relative;
+  order: 1;
+
+  @media only screen and (min-width: 600px) {
+    order: 2;
+  }
 `;
 
 const DappIframe = styled.iframe`
@@ -84,6 +95,17 @@ const DappIframe = styled.iframe`
     height: 100%;
     border: 0;
 `;
+
+const MobileOnly = styled.div`
+    @media only screen and (min-width: 600px) {
+        display: none;
+    }
+`
+const DesktopOnly = styled.div`
+    @media only screen and (max-width: 600px) {
+        display: none;
+    }
+`
 
 type DAPPBrowserProps = {
     dappUrl: string,
@@ -122,6 +144,7 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
         this.receiveDAPPMessage = this.receiveDAPPMessage.bind(this);
         this.setClientLoaded = this.setClientLoaded.bind(this);
         this.selectAccount = this.selectAccount.bind(this);
+        this.requestAccount = this.requestAccount.bind(this);
         this.fetchAccounts = this.fetchAccounts.bind(this);
 
         this.websocket = new SmartWebsocket(props.nodeUrl);
@@ -218,6 +241,17 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
         });
     }
 
+    async requestAccount() {
+        try {
+            const rawPayload = undefined; // TODO: ?
+            const payload = rawPayload ? JSON.parse(rawPayload) : undefined;
+            const account = await this.ledgerAPI.requestAccount(payload);
+            this.selectAccount(account);
+        } catch (error) {
+            // TODO: handle error
+        }
+    }
+
     componentDidMount() {
         window.addEventListener("message", this.receiveDAPPMessage, false);
         this.websocket.on("message", message => {
@@ -275,21 +309,29 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
         const {
             dappUrl,
         } = this.props;
-
+        
         return (
             <AppLoaderPageContainer>
-                <DappBrowserTopBar>
-                    Ledger DAPP Browser
-                    {
-                        accounts.length > 0 ? (
-                            <AccountSelector
-                                onAccountChange={this.selectAccount}
-                                selectedAccount={selectedAccount}
-                                accounts={accounts}
-                            />
-                        ) : null
-                    }
-                </DappBrowserTopBar>
+                <DappBrowserControlBar>
+                    <MobileOnly>
+                        <AccountRequest
+                            selectedAccount={selectedAccount}
+                            onRequestAccount={this.requestAccount}
+                        />
+                    </MobileOnly>
+                    <DesktopOnly>
+                        Ledger DAPP Browser
+                        {
+                            accounts.length > 0 ? (
+                                <AccountSelector
+                                    selectedAccount={selectedAccount}
+                                    accounts={accounts}
+                                    onAccountChange={this.selectAccount}
+                                />
+                            ) : null
+                        }
+                    </DesktopOnly>
+                </DappBrowserControlBar>
                 <DappContainer>
                     <CSSTransition in={clientLoaded} timeout={300} classNames="overlay">
                         <Overlay>
