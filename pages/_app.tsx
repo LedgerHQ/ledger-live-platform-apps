@@ -1,18 +1,38 @@
-import * as React from 'react'
+import React, {useMemo} from "react";
+import { useRouter } from 'next/router';
 import { AppProps } from 'next/app'
 import Head from 'next/head'
-import "../styles/globals.css"
+
+import { ThemeProvider } from "styled-components";
+
+import defaultTheme from "../styles/theme"
+import { GlobalStyle } from "../styles/GlobalStyle"
 
 import 'modern-normalize'
 
 export default function MyApp({ Component, pageProps }: AppProps): JSX.Element {
+    const router = useRouter();
+
+    const { backgroundColor, textColor } = router.query;
+
+    const theme = useMemo(() => ({
+        colors: {
+            ...defaultTheme.colors,
+            background: typeof backgroundColor === 'string' ? backgroundColor : defaultTheme.colors.background,
+            text: typeof textColor === 'string' ? textColor : defaultTheme.colors.text,
+        },
+    }), [backgroundColor, textColor]);
+
     return (
         <>
             <Head>
                 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                <title>Next.js TypeScript Quickstart</title>
+                <title>Ledger Live App Manager</title>
             </Head>
-            <Component {...pageProps} />
+            <ThemeProvider theme={theme}>
+                <GlobalStyle />
+                <Component {...pageProps} />
+            </ThemeProvider>
         </>
     )
 }

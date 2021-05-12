@@ -1,7 +1,7 @@
 import React from "react";
 import styled, { keyframes } from "styled-components";
-import {AccountSelector} from "./AccountSelector";
-import {AccountRequest} from "./AccountRequest";
+import { AccountSelector } from "./AccountSelector";
+import { AccountRequest } from "./AccountRequest";
 import LedgerLiveApi from '../../lib/LedgerLiveApiSdk';
 import LedgerLiveApiMock from '../../lib/LedgerLiveApiSdkMock';
 import WindowMessageTransport from '../../lib/WindowMessageTransport';
@@ -34,7 +34,7 @@ const Overlay = styled.div`
   bottom: 0;
   left: 0;
   right: 0;
-  background-color: black;
+
   display: flex;
   align-items: center;
   justify-content: center;
@@ -65,9 +65,7 @@ const Overlay = styled.div`
 
 const DappBrowserControlBar = styled.div`
   box-sizing: border-box;
-  background-color: black;
-  color: white;
-  padding: 8px 16px;
+  padding: 12px 16px;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -125,7 +123,6 @@ type DAPPBrowserProps = {
     pluginName: string,
     nodeUrl: string,
     mock?: boolean,
-    colors?: { backgroundColor: string, textColor: string },
 }
 
 type DAPPBrowserState = {
@@ -327,12 +324,14 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
         return (
             <AppLoaderPageContainer>
                 <DappBrowserControlBar>
-                    <MobileOnly>
-                        <AccountRequest
-                            selectedAccount={selectedAccount}
-                            onRequestAccount={this.requestAccount}
-                        />
-                    </MobileOnly>
+                    {accounts.length > 0 ? 
+                        <MobileOnly>
+                            <AccountRequest
+                                selectedAccount={selectedAccount}
+                                onRequestAccount={this.requestAccount}
+                            />
+                        </MobileOnly>
+                    : null}
                     <DesktopOnly>
                         Ledger DAPP Browser
                         {
