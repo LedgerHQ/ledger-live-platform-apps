@@ -97,11 +97,23 @@ const DappIframe = styled.iframe`
 `;
 
 const MobileOnly = styled.div`
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+
     @media only screen and (min-width: 600px) {
         display: none;
     }
 `
 const DesktopOnly = styled.div`
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+
     @media only screen and (max-width: 600px) {
         display: none;
     }
@@ -113,6 +125,7 @@ type DAPPBrowserProps = {
     pluginName: string,
     nodeUrl: string,
     mock?: boolean,
+    colors?: { backgroundColor: string, textColor: string },
 }
 
 type DAPPBrowserState = {
@@ -243,8 +256,9 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
 
     async requestAccount() {
         try {
-            const rawPayload = undefined; // TODO: ?
-            const payload = rawPayload ? JSON.parse(rawPayload) : undefined;
+            const payload = {
+                currencies: ["ethereum"]
+            };
             const account = await this.ledgerAPI.requestAccount(payload);
             this.selectAccount(account);
         } catch (error) {
