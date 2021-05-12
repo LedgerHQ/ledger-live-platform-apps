@@ -1,6 +1,7 @@
 import React from "react";
 import styled, { keyframes } from "styled-components";
-import {AccountSelector} from "./AccountSelector";
+import { AccountSelector } from "./AccountSelector";
+import { AccountRequest } from "./AccountRequest";
 import LedgerLiveApi from '../../lib/LedgerLiveApiSdk';
 import LedgerLiveApiMock from '../../lib/LedgerLiveApiSdkMock';
 import WindowMessageTransport from '../../lib/WindowMessageTransport';
@@ -33,7 +34,7 @@ const Overlay = styled.div`
   bottom: 0;
   left: 0;
   right: 0;
-  background-color: black;
+
   display: flex;
   align-items: center;
   justify-content: center;
@@ -62,21 +63,29 @@ const Overlay = styled.div`
   }
 `
 
-const DappBrowserTopBar = styled.div`
+const DappBrowserControlBar = styled.div`
   box-sizing: border-box;
-  background-color: black;
-  color: white;
-  padding: 8px 16px;
+  padding: 12px 16px;
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
+  order: 2;
+
+  @media only screen and (min-width: 600px) {
+    order: 1;
+  }
 `;
 
 const DappContainer = styled.div`
   width: 100%;
   flex: 1;
   position: relative;
+  order: 1;
+
+  @media only screen and (min-width: 600px) {
+    order: 2;
+  }
 `;
 
 const DappIframe = styled.iframe`
@@ -84,6 +93,29 @@ const DappIframe = styled.iframe`
     height: 100%;
     border: 0;
 `;
+
+const MobileOnly = styled.div`
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+
+    @media only screen and (min-width: 600px) {
+        display: none;
+    }
+`
+const DesktopOnly = styled.div`
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+
+    @media only screen and (max-width: 600px) {
+        display: none;
+    }
+`
 
 type DAPPBrowserProps = {
     dappUrl: string,
@@ -122,6 +154,7 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
         this.receiveDAPPMessage = this.receiveDAPPMessage.bind(this);
         this.setClientLoaded = this.setClientLoaded.bind(this);
         this.selectAccount = this.selectAccount.bind(this);
+        this.requestAccount = this.requestAccount.bind(this);
         this.fetchAccounts = this.fetchAccounts.bind(this);
 
         this.websocket = new SmartWebsocket(props.nodeUrl);
@@ -218,6 +251,18 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
         });
     }
 
+    async requestAccount() {
+        try {
+            const payload = {
+                currencies: ["ethereum"]
+            };
+            const account = await this.ledgerAPI.requestAccount(payload);
+            this.selectAccount(account);
+        } catch (error) {
+            // TODO: handle error
+        }
+    }
+
     componentDidMount() {
         window.addEventListener("message", this.receiveDAPPMessage, false);
         this.websocket.on("message", message => {
@@ -275,21 +320,31 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
         const {
             dappUrl,
         } = this.props;
-
+        
         return (
             <AppLoaderPageContainer>
-                <DappBrowserTopBar>
-                    Ledger DAPP Browser
-                    {
-                        accounts.length > 0 ? (
-                            <AccountSelector
-                                onAccountChange={this.selectAccount}
+                <DappBrowserControlBar>
+                    {accounts.length > 0 ? 
+                        <MobileOnly>
+                            <AccountRequest
                                 selectedAccount={selectedAccount}
-                                accounts={accounts}
+                                onRequestAccount={this.requestAccount}
                             />
-                        ) : null
-                    }
-                </DappBrowserTopBar>
+                        </MobileOnly>
+                    : null}
+                    <DesktopOnly>
+                        Ledger DAPP Browser
+                        {
+                            accounts.length > 0 ? (
+                                <AccountSelector
+                                    selectedAccount={selectedAccount}
+                                    accounts={accounts}
+                                    onAccountChange={this.selectAccount}
+                                />
+                            ) : null
+                        }
+                    </DesktopOnly>
+                </DappBrowserControlBar>
                 <DappContainer>
                     <CSSTransition in={clientLoaded} timeout={300} classNames="overlay">
                         <Overlay>
