@@ -242,11 +242,19 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
         });
         const accounts = await this.ledgerAPI.listAccounts();
         const filteredAccounts = accounts
-            .filter((account: any) => account.currency === "ethereum");
+            .filter((account: Account) => account.currency === "ethereum");
+
+        const storedAccountId: string = (typeof window !== "undefined" && localStorage.getItem("accountId")) || "";
+        const storedAccounts = filteredAccounts
+            .filter((account: Account) => account.address === storedAccountId);
+
+        const selectedAccount = storedAccounts.length > 0 ? storedAccounts[0]
+            : filteredAccounts.length > 0 ? filteredAccounts[0]
+                : undefined;
 
         this.setState({
             accounts: filteredAccounts,
-            selectedAccount: filteredAccounts.length > 0 ? filteredAccounts[0] : undefined,
+            selectedAccount,
             fetchingAccounts: false,
         });
     }
@@ -288,6 +296,10 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
 
     selectAccount(account: Account | undefined) {
         if (account) {
+            if (typeof window !== "undefined") {
+                localStorage.setItem("accountId", account.address);
+            }
+
             this.sendMessageToDAPP({
                 "jsonrpc": "2.0",
                 "method": "accountsChanged",
