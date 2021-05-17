@@ -1,16 +1,26 @@
 import React, { useEffect, useState } from "react";
-import {useRouter} from 'next/router';
+import {NextRouter, useRouter} from 'next/router';
 import {DAPPBrowser} from "../../src/DAPPBrowser";
 
-const nodeUrl = "wss://eth-mainnet.ws.alchemyapi.io/v2/0fyudoTG94QWC0tEtfJViM9v2ZXJuij2";
+const NODE_URL = "wss://eth-mainnet.ws.alchemyapi.io/v2/0fyudoTG94QWC0tEtfJViM9v2ZXJuij2";
+
+function getQueryVariable(name: string,router: NextRouter): string | undefined {
+    const queryVariable = router.query[name];
+    if (queryVariable) {
+        return !Array.isArray(queryVariable) ? queryVariable : queryVariable[0]
+    }
+    return undefined;
+}
 
 function DappBrowserPage() {
     const [mounted, setMounted] = useState(false);
     const router = useRouter();
 
-    const { url, mock } = router.query;
-
-    const isMock = !Array.isArray(mock) && mock === "true"
+    const dappName = getQueryVariable("dappName", router) || "unknown";
+    const dappUrl = getQueryVariable("url", router);
+    const nanoApp = getQueryVariable("nanoApp", router);
+    const nodeURL = getQueryVariable("nodeURL", router) || NODE_URL;
+    const isMock = getQueryVariable("mock", router)  === "true";
 
     useEffect(() => {
         setMounted(true);
@@ -19,12 +29,12 @@ function DappBrowserPage() {
 
     if (mounted) {
         return (
-            !!url ? (
+            !!dappUrl ? (
                 <DAPPBrowser
-                    dappName="paraswap"
-                    dappUrl={String(url)}
-                    pluginName="paraswap"
-                    nodeUrl={nodeUrl}
+                    dappName={dappName}
+                    dappUrl={dappUrl}
+                    nanoApp={nanoApp}
+                    nodeUrl={nodeURL}
                     mock={isMock}
                 />
             ) : null

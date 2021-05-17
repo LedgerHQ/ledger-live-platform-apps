@@ -120,7 +120,7 @@ const DesktopOnly = styled.div`
 type DAPPBrowserProps = {
     dappUrl: string,
     dappName: string,
-    pluginName: string,
+    nanoApp?: string,
     nodeUrl: string,
     mock?: boolean,
 }
@@ -204,8 +204,7 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
                     const fromAccount = this.state.accounts.find(account => account.address.toLowerCase() === ethTX.from.toLowerCase());
                     if (fromAccount) {
                         try {
-                            const signedTransaction = await this.ledgerAPI.signTransaction(fromAccount.id, tx);
-                            console.log("got signedTransaction from llApi", signedTransaction)
+                            const signedTransaction = await this.ledgerAPI.signTransaction(fromAccount.id, tx, { useApp: this.props.nanoApp });
                             const hash = await this.ledgerAPI.broadcastSignedTransaction(fromAccount.id, signedTransaction);
                             this.sendMessageToDAPP({
                                 "id": data.id,
