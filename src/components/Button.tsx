@@ -5,6 +5,7 @@ type Props = {
   theme: DefaultTheme,
   transparent?: boolean,
   small?: boolean,
+  disabled?: boolean,
 }
 
 const Button = styled.button`
@@ -13,6 +14,7 @@ const Button = styled.button`
   padding: 0.8em 1.2em;
   transition-duration: color 0.2s, background 0.2s;
   white-space: nowrap;
+  cursor: pointer;
   
   ${(p: Props) => css`
     background: ${p.theme.colors.primary};
@@ -32,10 +34,30 @@ const Button = styled.button`
     }
   `}
 
+  ${(p: Props) => p.disabled && !p.transparent && css`
+    opacity: 0.4;
+    cursor: default;
+  `}
+
+  ${(p: Props) => p.disabled && !p.transparent && css`
+    &, &:hover, &:focus {
+      background: ${Color(p.theme.colors.text).alpha(0.2).string()};
+    }
+  `}
+    
+  ${(p: Props) => p.disabled && p.transparent && css`
+    &, &:hover, &:focus {
+      color: ${Color(p.theme.colors.text).alpha(0.2).string()};
+    }
+  `}
+
   ${(p: Props) => p.small && css`
     font-size: 0.9em;
     padding: 0.4em 0.8em;
   `}
+
+
+
 `;
 
 export default Button
