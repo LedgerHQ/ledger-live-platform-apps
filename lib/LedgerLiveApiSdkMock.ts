@@ -77,7 +77,7 @@ export default class LedgerLiveApiMock {
         if (!this.connected) {
             throw new Error("Ledger Live API not connected");
         }
-        return generateRandomTxID(28);
+        return generateRandomTxID(64);
     }
 
 }
