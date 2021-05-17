@@ -21,6 +21,7 @@ function DappBrowserPage() {
     const nanoApp = getQueryVariable("nanoApp", router);
     const nodeURL = getQueryVariable("nodeURL", router) || NODE_URL;
     const isMock = getQueryVariable("mock", router)  === "true";
+    const initialAccountId = getQueryVariable("accountId", router);
 
     useEffect(() => {
         setMounted(true);
@@ -36,6 +37,7 @@ function DappBrowserPage() {
                     nanoApp={nanoApp}
                     nodeUrl={nodeURL}
                     mock={isMock}
+                    initialAccountId={initialAccountId}
                 />
             ) : null
         );

@@ -123,6 +123,7 @@ type DAPPBrowserProps = {
     nanoApp?: string,
     nodeUrl: string,
     mock?: boolean,
+    initialAccountId: string | undefined,
 }
 
 type DAPPBrowserState = {
@@ -241,11 +242,10 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
         });
         const accounts = await this.ledgerAPI.listAccounts();
         const filteredAccounts = accounts
-            .filter((account: any) => account.currency === "ethereum");
+            .filter((account: Account) => account.currency === "ethereum");
 
         this.setState({
             accounts: filteredAccounts,
-            selectedAccount: filteredAccounts.length > 0 ? filteredAccounts[0] : undefined,
             fetchingAccounts: false,
         });
     }
@@ -287,6 +287,10 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
 
     selectAccount(account: Account | undefined) {
         if (account) {
+            if (typeof window !== "undefined") {
+                localStorage.setItem("accountId", account.address);
+            }
+
             this.sendMessageToDAPP({
                 "jsonrpc": "2.0",
                 "method": "accountsChanged",
@@ -307,10 +311,27 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
         });
     }
 
-    render() {
+    chooseCurrentAccount(): Account | undefined {
         const {
             accounts,
             selectedAccount,
+        } = this.state;
+
+        if (!accounts?.length) {
+            return undefined;
+        }
+
+        const initialAccount = accounts.filter(account => account.address === this.props.initialAccountId)?.[0];
+
+        const storedAccountId: string = (typeof window !== "undefined" && localStorage.getItem("accountId")) || "";
+        const storedAccount = accounts.filter(account => account.address === storedAccountId)?.[0];
+
+        return selectedAccount || initialAccount || storedAccount || accounts[0];
+    }
+
+    render() {
+        const {
+            accounts,
             clientLoaded,
             fetchingAccounts,
             connected,
@@ -320,13 +341,15 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
             dappUrl,
         } = this.props;
         
+        const account = this.chooseCurrentAccount();
+
         return (
             <AppLoaderPageContainer>
                 <DappBrowserControlBar>
                     {accounts.length > 0 ? 
                         <MobileOnly>
                             <AccountRequest
-                                selectedAccount={selectedAccount}
+                                selectedAccount={account}
                                 onRequestAccount={this.requestAccount}
                             />
                         </MobileOnly>
@@ -336,7 +359,7 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
                         {
                             accounts.length > 0 ? (
                                 <AccountSelector
-                                    selectedAccount={selectedAccount}
+                                    selectedAccount={account}
                                     accounts={accounts}
                                     onAccountChange={this.selectAccount}
                                 />
