@@ -1,9 +1,59 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
+import styled from "styled-components";
+import Image from 'next/image'
+
 import LedgerLiveApi from '../lib/LedgerLiveApiSdk';
 import WindowMessageTransport from '../lib/WindowMessageTransport';
 import { Account, Currency } from "../lib/types";
 
+import Button from './components/Button';
+
 const SUPPORTED_CURRENCIES = ["ethereum", "bitcoin"];
+
+const Container = styled.div`
+  width: 100%;
+  height: 100%;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`
+
+const Panel = styled.div`
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 340px;
+  align-items: stretch;
+  justify-content: center;
+
+  > * {
+    margin-bottom: 8px;
+  }
+  
+  > *:last-child {
+    margin-bottom: 0;
+  }
+`
+const Logo = styled.div`
+  text-align: center;
+  margin-bottom: 32px;
+`
+
+const SubmitButtom = styled(Button)`
+  flex-grow: 1;
+`
+
+const AccountDisplay = styled.div`
+  border-color: ${p => p.theme.colors.text};
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 4px;
+  padding: 12px 16px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`
 
 function useDeviceToken() {
   const [deviceToken, setDeviceToken] = useState(window.localStorage.getItem("DEVICE_TOKEN"));
@@ -31,36 +81,28 @@ const getWyre = (deviceToken: string, account: Account, currencies: Currency[]) 
   if (!currency) {
     throw new Error('currency not found for account');
   }
-  console.log({
-    type: "onramp",
-    destCurrency: currency.ticker,
-    dest: `${account.currency}:${account.address.toLowerCase()}`,
-},)
+
   // @ts-ignore
   return new window.Wyre({
     env: "test",
     auth: {
-        type: "secretKey",
-        secretKey: deviceToken
+      type: "secretKey",
+      secretKey: deviceToken
     },
     operation: {
-        type: "onramp",
-        destCurrency: currency.ticker,
-        dest: `${account.currency}:${account.address.toLowerCase()}`,
+      type: "onramp",
+      destCurrency: currency.ticker,
+      dest: `${account.currency}:${account.address.toLowerCase()}`,
     },
     onExit: function (error: Error | null) {
-        if (error !== null) {
-            alert("errored!")
-            
-            console.error(error)
-        } else {
-            console.log('exited!')
-            alert("exited!")
-        }
+      if (error !== null) {
+        console.error(error)
+      } else {
+        console.log('exited!')
+      }
     },
     onSuccess: function () {
-        console.log("success!")
-        alert("successed!")
+      console.log("success!")
     }
   });
 }
@@ -68,15 +110,34 @@ const getWyre = (deviceToken: string, account: Account, currencies: Currency[]) 
 export function WyreApp() {
   const api = useRef<LedgerLiveApi | null>(null);
   const [currencies, setCurrencies] = useState<Currency[]>([]);
+  const [account, setAccount] = useState<Account | null>(null);
   const deviceToken = useDeviceToken();
 
 
-  const selectAccount = useCallback(() => {
-    if (api.current && deviceToken && currencies.length) {
-      api.current.requestAccount({ allowAddAccount: true, currencies: SUPPORTED_CURRENCIES })
-        .then(account => account && getWyre(deviceToken, account, currencies).open(), () => {});
+  const selectAccount = useCallback(async () => {
+    if (api.current) {
+      try {
+        const account = await api.current.requestAccount({ allowAddAccount: true, currencies: SUPPORTED_CURRENCIES });
+        setAccount(account);
+      } catch (error) {
+        // ignore error
+      }
     }
-  }, [deviceToken, currencies]);
+  }, [api.current, account]);
+
+  const submit = useCallback(async () => {
+    if (api.current && deviceToken && account && currencies.length) {
+      try {
+        const address = await api.current.receive(account.id);
+        
+        if (account.address === address) {
+          getWyre(deviceToken, account, currencies).open();
+        }
+      } catch (error) {
+        // ignore error
+      }
+    }
+  }, [getWyre, api.current, deviceToken, currencies, account]);
 
   useEffect(() => {
     const llapi = new LedgerLiveApi(new WindowMessageTransport());
@@ -94,14 +155,23 @@ export function WyreApp() {
     }
   }, []);
 
-  useEffect(() => {
-    selectAccount();
-  }, [api.current])
-
   return (
   <>
-    <div>
-      <button onClick={selectAccount}>Select Account</button>
-    </div>
+    <Container>
+      
+      <Panel>
+        <Logo>
+            <Image src="/icons/wyre.svg" width={96} height={96} />
+        </Logo>
+        {account
+          ? <>
+            <AccountDisplay>{account.name}</AccountDisplay>
+            <SubmitButtom transparent onClick={selectAccount}>Change Account</SubmitButtom>
+          </>
+          : <SubmitButtom onClick={selectAccount}>Select Account</SubmitButtom>
+        }
+        <SubmitButtom disabled={!account} onClick={submit}>Continue</SubmitButtom>
+      </Panel>
+    </Container>
   </>);
 }
