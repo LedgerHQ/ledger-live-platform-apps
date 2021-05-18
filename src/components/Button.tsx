@@ -9,6 +9,7 @@ type Props = {
 }
 
 const Button = styled.button`
+  outline: none;
   border: none;
   border-radius: 4px;
   padding: 0.8em 1.2em;

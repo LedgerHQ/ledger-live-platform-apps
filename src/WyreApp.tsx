@@ -53,6 +53,7 @@ const AccountDisplay = styled.div`
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 `
 
 function useDeviceToken() {
@@ -77,7 +78,7 @@ function useDeviceToken() {
 
 const getWyre = (deviceToken: string, account: Account, currencies: Currency[]) => {
   const currency = currencies.find(currency => currency.id === account.currency);
-  console.log(currencies, currency);
+
   if (!currency) {
     throw new Error('currency not found for account');
   }
@@ -124,21 +125,13 @@ export function WyreApp() {
       }
     }
   }, [api.current, account]);
-  console.log("coucou")
+
   const submit = useCallback(async () => {
-    console.log("submit")
     if (api.current && deviceToken && account && currencies.length) {
       try {
         const address = await api.current.receive(account.id);
-        console.log("received", address, account)
         if (account.address === address) {
-          console.log("Verified address", address);
-          try {
-            getWyre(deviceToken, account, currencies).open();
-            console.log("Wyred")
-          } catch (error) {
-            console.error(error);
-          }
+          getWyre(deviceToken, account, currencies).open();
         }
       } catch (error) {
         // ignore error
