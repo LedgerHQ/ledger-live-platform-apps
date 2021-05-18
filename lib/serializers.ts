@@ -53,7 +53,7 @@ export function serializeEthereumTransaction(
         amount: transaction.amount.toString(),
         recipient: transaction.recipient,
         nonce: transaction.nonce,
-        data: transaction.data ? transaction.data.toString() : undefined,
+        data: transaction.data ? transaction.data.toString("hex") : undefined,
         gasPrice: transaction.gasPrice
             ? transaction.gasPrice.toString()
             : undefined,
@@ -71,7 +71,7 @@ export function deserializeEthereumTransaction(
         amount: new BigNumber(rawTransaction.amount),
         recipient: rawTransaction.recipient,
         nonce: rawTransaction.nonce,
-        data: rawTransaction.data ? Buffer.from(rawTransaction.data) : undefined,
+        data: rawTransaction.data ? Buffer.from(rawTransaction.data, "hex") : undefined,
         gasPrice: rawTransaction.gasPrice
             ? new BigNumber(rawTransaction.gasPrice)
             : undefined,

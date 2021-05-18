@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, {useEffect, useMemo, useState} from "react";
 import {NextRouter, useRouter} from 'next/router';
 import {DAPPBrowser} from "../../src/DAPPBrowser";
+import {ChainConfig} from "../../src/DAPPBrowser/types";
 
 const NODE_URL = "wss://eth-mainnet.ws.alchemyapi.io/v2/0fyudoTG94QWC0tEtfJViM9v2ZXJuij2";
 
@@ -28,6 +29,12 @@ function DappBrowserPage() {
         return () => setMounted(false);
     }, []);
 
+    const chainConfigs: ChainConfig[] = useMemo(() => ([
+        { name: "Ethereum", currency: "ethereum", chainID: 1, nodeURL  },
+        { name: "Ropsten", currency: "ethereum", chainID: 3, nodeURL: "wss://ropsten.infura.io/ws/v3/a1664f14bbf54437acd24a79a600e3cc" },
+        { name: "Polygon", currency: "ethereum", chainID: 137, nodeURL: "wss://rpc-mainnet.maticvigil.com/ws" },
+    ]), [nodeURL])
+
     if (mounted) {
         return (
             !!dappUrl ? (
@@ -35,7 +42,7 @@ function DappBrowserPage() {
                     dappName={dappName}
                     dappUrl={dappUrl}
                     nanoApp={nanoApp}
-                    nodeUrl={nodeURL}
+                    chainConfigs={chainConfigs}
                     mock={isMock}
                     initialAccountId={initialAccountId}
                 />

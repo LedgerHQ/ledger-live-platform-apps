@@ -11,6 +11,8 @@ import CSSTransition from "react-transition-group/CSSTransition";
 import {convertEthToLiveTX} from "./helper";
 import {JSONRPCRequest, JSONRPCResponse} from "json-rpc-2.0";
 import {Account} from "../../lib/types";
+import {ChainConfig} from "./types";
+// import {ChainSelector} from "./ChainSelector";
 
 const loading = keyframes`
   0% { opacity:0.8; }
@@ -121,45 +123,54 @@ type DAPPBrowserProps = {
     dappUrl: string,
     dappName: string,
     nanoApp?: string,
-    nodeUrl: string,
     mock?: boolean,
     initialAccountId: string | undefined,
+    chainConfigs: ChainConfig[],
 }
 
 type DAPPBrowserState = {
     accounts: Account[],
     selectedAccount: Account | undefined,
+    selectedChainConfig: ChainConfig | undefined,
     clientLoaded: boolean,
     fetchingAccounts: boolean,
     connected: boolean,
 }
 
-const initialState = {
-    accounts: [],
-    selectedAccount: undefined,
-    clientLoaded: false,
-    fetchingAccounts: false,
-    connected: false,
+const getInitialState = (props: DAPPBrowserProps): DAPPBrowserState => {
+    if (props.chainConfigs.length === 0) {
+        throw new Error("No chain configs provided");
+    }
+
+    return {
+        accounts: [],
+        selectedAccount: undefined,
+        selectedChainConfig: props.chainConfigs[0],
+        clientLoaded: false,
+        fetchingAccounts: false,
+        connected: false,
+    }
 }
 
 export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserState> {
     ledgerAPI: LedgerLiveApi | LedgerLiveApiMock;
-    websocket: SmartWebsocket;
+    websocket: SmartWebsocket | undefined;
     iframeRef = React.createRef<HTMLIFrameElement>();
 
 
     constructor(props: DAPPBrowserProps) {
         super(props);
-        this.state = initialState;
+        this.state = getInitialState(props);
 
         this.receiveDAPPMessage = this.receiveDAPPMessage.bind(this);
         this.setClientLoaded = this.setClientLoaded.bind(this);
         this.selectAccount = this.selectAccount.bind(this);
         this.requestAccount = this.requestAccount.bind(this);
         this.fetchAccounts = this.fetchAccounts.bind(this);
+        this.selectChainConfig = this.selectChainConfig.bind(this);
+        this.initChainConfig = this.initChainConfig.bind(this);
 
-        this.websocket = new SmartWebsocket(props.nodeUrl);
-        this.ledgerAPI = props.mock ? new LedgerLiveApiMock() : new LedgerLiveApi(new WindowMessageTransport())
+        this.ledgerAPI = props.mock ? new LedgerLiveApiMock() : new LedgerLiveApi(new WindowMessageTransport());
     }
 
     private sendMessageToDAPP(message: JSONRPCResponse| JSONRPCRequest) {
@@ -174,7 +185,12 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
     private async receiveDAPPMessage(event: MessageEvent) {
         const {
             selectedAccount,
+            selectedChainConfig,
         } = this.state;
+
+        if (!selectedChainConfig) {
+            throw new Error("No chain config selected");
+        }
 
         const dappURL = new URL(this.props.dappUrl);
 
@@ -184,11 +200,19 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
             console.log(`MESSAGE FROM APP ${data.method}`, data);
 
             switch (data.method) {
+                case "eth_chainId": {
+                    this.sendMessageToDAPP({
+                        "id": data.id,
+                        "jsonrpc": "2.0",
+                        "result": `0x${selectedChainConfig.chainID.toString(16)}`
+                    });
+                    break;
+                }
                 case "eth_requestAccounts": {
                     this.sendMessageToDAPP({
                         "id": data.id,
                         "jsonrpc": "2.0",
-                        "result": selectedAccount ? [selectedAccount.address] : []
+                        "result": selectedAccount ? [selectedAccount.address] : [],
                     });
                     break;
                 }
@@ -196,7 +220,7 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
                     this.sendMessageToDAPP({
                         "id": data.id,
                         "jsonrpc": "2.0",
-                        "result": selectedAccount ? [selectedAccount.address] : []
+                        "result": selectedAccount ? [selectedAccount.address] : [],
                     });
                     break;
                 }
@@ -204,13 +228,14 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
                     this.sendMessageToDAPP({
                         "id": data.id,
                         "jsonrpc": "2.0",
-                        "result": selectedAccount ? [selectedAccount.address] : []
+                        "result": selectedAccount ? [selectedAccount.address] : [],
                     });
                     break;
                 }
                 case "eth_sendTransaction": {
                     const ethTX = data.params[0];
                     const tx = convertEthToLiveTX(ethTX);
+                    console.log("CONVERTED TX: ", tx)
                     const fromAccount = this.state.accounts.find(account => account.address.toLowerCase() === ethTX.from.toLowerCase());
                     if (fromAccount) {
                         try {
@@ -239,19 +264,27 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
                     break;
                 }
                 default: {
-                    this.websocket.send(data);
+                    if (this.websocket) {
+                        this.websocket.send(data);
+                    }
                 }
             }
         }
     }
 
     async fetchAccounts() {
+        const { selectedChainConfig } = this.state;
+
+        if (!selectedChainConfig) {
+            throw new Error("No chain config selected");
+        }
+
         this.setState({
             fetchingAccounts: true,
         });
         const accounts = await this.ledgerAPI.listAccounts();
         const filteredAccounts = accounts
-            .filter((account: Account) => account.currency === "ethereum");
+            .filter((account: Account) => account.currency === selectedChainConfig.currency);
 
         const initialAccount = this.props.initialAccountId ? accounts.find(account => account.id === this.props.initialAccountId) : undefined;
         const storedAccountId: string | null = typeof window !== "undefined" ? localStorage.getItem("accountId") : null;
@@ -269,9 +302,15 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
     }
 
     async requestAccount() {
+        const { selectedChainConfig } = this.state;
+
+        if (!selectedChainConfig) {
+            throw new Error("No chain config selected");
+        }
+
         try {
             const payload = {
-                currencies: ["ethereum"]
+                currencies: [selectedChainConfig.currency]
             };
             const account = await this.ledgerAPI.requestAccount(payload);
             this.selectAccount(account);
@@ -280,15 +319,32 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
         }
     }
 
-    componentDidMount() {
-        window.addEventListener("message", this.receiveDAPPMessage, false);
+    async initChainConfig(chainConfig: ChainConfig) {
+        if (this.websocket) {
+            this.websocket.close();
+            delete this.websocket;
+        }
+
+        this.websocket = new SmartWebsocket(chainConfig.nodeURL);
         this.websocket.on("message", message => {
             this.sendMessageToDAPP(message);
         });
 
         this.websocket.connect();
+        await this.fetchAccounts();
+    }
+
+    async componentDidMount() {
+        const { selectedChainConfig } = this.state;
+
+        if (!selectedChainConfig) {
+            throw new Error("No chain config selected");
+        }
+
         this.ledgerAPI.connect();
-        void this.fetchAccounts();
+        window.addEventListener("message", this.receiveDAPPMessage, false);
+
+        await this.initChainConfig(selectedChainConfig);
 
         this.setState({
             connected: true,
@@ -300,10 +356,18 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
             connected: false,
         })
         window.removeEventListener("message", this.receiveDAPPMessage, false);
-        this.websocket.close();
+        if (this.websocket) {
+            this.websocket.close();
+        }
     }
 
     selectAccount(account: Account | undefined) {
+        const { selectedChainConfig } = this.state;
+
+        if (!selectedChainConfig) {
+            throw new Error("No chain config selected");
+        }
+
         if (account) {
             if (typeof window !== "undefined") {
                 localStorage.setItem("accountId", account.id);
@@ -323,6 +387,29 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
         });
     }
 
+    async selectChainConfig(chainConfig: ChainConfig | undefined) {
+        if (chainConfig) {
+            console.log("switched to: ", chainConfig)
+            await this.initChainConfig(chainConfig);
+
+            if (typeof window !== "undefined") {
+                localStorage.setItem("chainId", chainConfig.chainID.toString());
+            }
+
+             this.sendMessageToDAPP({
+                 "jsonrpc": "2.0",
+                 "method": "chainChanged",
+                 "params": [
+                     [`0x${chainConfig.chainID.toString(16)}`]
+                 ]
+             });
+        }
+
+        this.setState({
+            selectedChainConfig: chainConfig,
+        });
+    }
+
     setClientLoaded() {
         this.setState({
             clientLoaded: true,
@@ -336,10 +423,12 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
             fetchingAccounts,
             connected,
             selectedAccount,
+            // selectedChainConfig,
         } = this.state;
 
         const {
             dappUrl,
+            // chainConfigs,
         } = this.props;
 
         return (
@@ -363,6 +452,15 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
                                     onAccountChange={this.selectAccount}
                                 />
                             ) : null
+                        }
+                        {
+                            //                             chainConfigs.length > 0 ? (
+                            //                                 <ChainSelector
+                            //                                     selectedChainConfig={selectedChainConfig}
+                            //                                     chainConfigs={chainConfigs}
+                            //                                     onChainConfigChange={this.selectChainConfig}
+                            //                                 />
+                            //                             ) : null
                         }
                     </DesktopOnly>
                 </DappBrowserControlBar>
