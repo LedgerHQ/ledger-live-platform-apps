@@ -124,14 +124,21 @@ export function WyreApp() {
       }
     }
   }, [api.current, account]);
-
+  console.log("coucou")
   const submit = useCallback(async () => {
+    console.log("submit")
     if (api.current && deviceToken && account && currencies.length) {
       try {
         const address = await api.current.receive(account.id);
-        
+        console.log("received", address, account)
         if (account.address === address) {
-          getWyre(deviceToken, account, currencies).open();
+          console.log("Verified address", address);
+          try {
+            getWyre(deviceToken, account, currencies).open();
+            console.log("Wyred")
+          } catch (error) {
+            console.error(error);
+          }
         }
       } catch (error) {
         // ignore error

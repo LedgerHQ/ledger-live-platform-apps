@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useRef, useState} from "react";
-import styled, { DefaultTheme } from "styled-components";
+import styled, { css, DefaultTheme } from "styled-components";
 import Select from 'react-select'
 
 import LedgerLiveApi from '../../lib/LedgerLiveApiSdk';
@@ -38,11 +38,15 @@ const ToolBar = styled.div`
     background-color: #ccc;
     padding: 8px 6px;
 `
+
+type OutputProps = { type: string, theme: DefaultTheme };
 const Output = styled.pre`
     overflow: scroll;
     margin: 0;
-    color: ${(props: { isError: boolean, theme: DefaultTheme }) => props.isError ? props.theme.colors.alert : props.theme.colors.text };
     font-size: 12px;
+    ${(p: OutputProps) => p.type === "pending" && css`color:${p.theme.colors.primary}`}
+    ${(p: OutputProps) => p.type === "success" && css`color:${p.theme.colors.text}`}
+    ${(p: OutputProps) => p.type === "error" && css`color:${p.theme.colors.alert}`}
 `
 
 const PAYLOAD_SIGN = { family: "ethereum", recipient: "XXX", amount: "1" };
@@ -59,10 +63,11 @@ const ACTIONS = [
 
 const prettyJSON = (payload: any) => JSON.stringify(payload, null, 2);
 
+
 export default function DebugApp() {
     const api = useRef<LedgerLiveApi | null>(null);
-    const [lastAnswer, setLastAnswer] = useState<any>(null);
-    const [isError, setIsError] = useState<any>(false);
+    const [lastAnswer, setLastAnswer] = useState<any>(undefined);
+    const [answerType, setAnswerType] = useState<string>("none");
     const [method, setMethod] = useState<any>(ACTIONS[0]);
     const [accounts, setAccounts] = useState<any>([]);
     const [account, setAccount] = useState<any>(null);
@@ -130,8 +135,10 @@ export default function DebugApp() {
             }
 
             try {
+                setAnswerType("pending");
+                setLastAnswer("Waiting...");
                 const result = await action;
-                setIsError(false);
+                setAnswerType("success");
                 setLastAnswer(result);
                 if (method.value === "account.list") {
                     setAccounts(result);
@@ -142,7 +149,7 @@ export default function DebugApp() {
             } catch (err) {
                 setLastAnswer({ message: err.message });
                 console.log(err);
-                setIsError(true);
+                setAnswerType("error");
             }
 
         }
@@ -183,6 +190,7 @@ export default function DebugApp() {
                             options={ACTIONS}
                             onChange={handleMethodChange}
                             value={method}
+                            isSearchable={false}
                         />
                     </Field>
                     <Field>
@@ -194,6 +202,7 @@ export default function DebugApp() {
                             getOptionLabel={option => `${option.name} (${option.address})`}
                             value={account}
                             isDisabled={!method.useAccount}
+                            isSearchable={false}
                         />
                     </Field>
 
@@ -205,7 +214,7 @@ export default function DebugApp() {
                 <button onClick={execute}>EXECUTE</button>
             </ToolBar>
 
-            <Output isError={isError}>{prettyJSON(lastAnswer)}</Output>
+            <Output type={answerType}>{lastAnswer !== undefined ? prettyJSON(lastAnswer) : ""}</Output>
         </AppLoaderPageContainer>
     );
 }
