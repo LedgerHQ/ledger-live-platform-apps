@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useRef, useState} from "react";
-import styled from "styled-components";
+import styled, { DefaultTheme } from "styled-components";
 import Select from 'react-select'
 
 import LedgerLiveApi from '../../lib/LedgerLiveApiSdk';
@@ -41,7 +41,7 @@ const ToolBar = styled.div`
 const Output = styled.pre`
     overflow: scroll;
     margin: 0;
-    color: ${(props: { isError: boolean }) => props.isError ? 'red': '#eee'};
+    color: ${(props: { isError: boolean, theme: DefaultTheme }) => props.isError ? props.theme.colors.alert : props.theme.colors.text };
     font-size: 12px;
 `
 
