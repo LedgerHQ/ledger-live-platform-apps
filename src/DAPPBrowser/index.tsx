@@ -325,7 +325,10 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
             delete this.websocket;
         }
 
-        this.websocket = new SmartWebsocket(chainConfig.nodeURL);
+        this.websocket = new SmartWebsocket(chainConfig.nodeURL, {
+            reconnect: true,
+            reconnectMaxAttempts: Infinity,
+        });
         this.websocket.on("message", message => {
             this.sendMessageToDAPP(message);
         });
