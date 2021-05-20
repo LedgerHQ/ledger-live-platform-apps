@@ -1,5 +1,5 @@
 
-import { JSONRPCServerAndClient, JSONRPCClient, JSONRPCServer } from "json-rpc-2.0";
+import { JSONRPCServerAndClient, JSONRPCClient, JSONRPCServer, JSONRPCParams } from "json-rpc-2.0";
 import { 
     RequestAccountParams,
     ListCurrenciesParams,
@@ -18,21 +18,39 @@ import {
     deserializeSignedTransaction, 
     serializeSignedTransaction,
 } from "./serializers";
+import Logger from './logger';
+
+const defaultLogger = new Logger('LL-API');
 
 export default class LedgerLiveApi {
     private transport: Transport;
+    private logger: Logger;
     private serverAndClient?: JSONRPCServerAndClient;
     
-    constructor(transport: Transport) {
+    constructor(transport: Transport, logger: Logger = defaultLogger) {
         this.transport = transport;
+        this.logger = logger;
     }
 
-    private api(): JSONRPCServerAndClient {
+    /**
+     * Wrapper to api request for logging
+     */
+
+     private async _request(method: string, params?: JSONRPCParams | undefined, clientParams?: void | undefined): Promise<any> {
         if (!this.serverAndClient) {
+            this.logger.error(`not connected`, method);
             throw new Error("Ledger Live API not connected");
         }
 
-        return this.serverAndClient;
+        this.logger.log(`request - ${method}`, params, clientParams);
+        try {
+            const result = await this.serverAndClient.request(method, params, clientParams);
+            this.logger.log(`response - ${method}`, params, clientParams);
+            return result;
+        } catch (error) {
+            this.logger.warn(`error - ${method}`, params, clientParams);
+            throw error;
+        }
     }
 
     /**
@@ -47,6 +65,7 @@ export default class LedgerLiveApi {
         this.transport.onMessage = (payload) => serverAndClient.receiveAndSend(payload);
         this.transport.connect();
         this.serverAndClient = serverAndClient;
+        this.logger.log('connected', this.transport);
     }
 
     /**
@@ -54,7 +73,8 @@ export default class LedgerLiveApi {
      */
     async disconnect() {
         delete this.serverAndClient;
-        return this.transport.disconnect();
+        await this.transport.disconnect();
+        this.logger.log('disconnected', this.transport);
     }
 
     /** Legder Live Methods */
@@ -66,7 +86,7 @@ export default class LedgerLiveApi {
      * @returns Account
      */
     async requestAccount(params: RequestAccountParams): Promise<Account> {
-        const rawAccount = await this.api().request('account.request', params || {});
+        const rawAccount = await this._request('account.request', params || {});
         
         return deserializeAccount(rawAccount);
     }
@@ -77,7 +97,7 @@ export default class LedgerLiveApi {
      * @returns {Account[]}
      */
     async listAccounts(): Promise<Account[]> {
-        const rawAccounts = await this.api().request('account.list');
+        const rawAccounts = await this._request('account.list');
 
         return rawAccounts.map(deserializeAccount);
     }
@@ -89,7 +109,7 @@ export default class LedgerLiveApi {
      * @returns {Currency[]}
      */
     async listCurrencies(params?: ListCurrenciesParams): Promise<Currency[]> {
-        return this.api().request('currency.list', params || {});
+        return this._request('currency.list', params || {});
     }
 
     /**
@@ -99,7 +119,7 @@ export default class LedgerLiveApi {
      * @returns string - the verified address
      */
     async receive(accountId: string): Promise<string> {
-        return this.api().request('account.receive', { accountId });
+        return this._request('account.receive', { accountId });
     }
 
     /**
@@ -111,7 +131,7 @@ export default class LedgerLiveApi {
      * @returns {SignedTransaction}
      */
     async signTransaction(accountId: string, transaction: Transaction, params?: SignTransactionParams): Promise<SignedTransaction> {
-        const rawSignedTransaction = await this.api().request('transaction.sign', {
+        const rawSignedTransaction = await this._request('transaction.sign', {
             accountId,
             transaction: serializeTransaction(transaction),
             params: params || {},
@@ -128,7 +148,7 @@ export default class LedgerLiveApi {
      * @returns {string} - hash of the transaction
      */
     async broadcastSignedTransaction(accountId: string, signedTransaction: SignedTransaction): Promise<string> {
-        return this.api().request('transaction.broadcast', {
+        return this._request('transaction.broadcast', {
             accountId,
             signedTransaction: serializeSignedTransaction(signedTransaction),
         });
