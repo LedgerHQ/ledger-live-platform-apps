@@ -446,7 +446,7 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
                         </MobileOnly>
                     : null}
                     <DesktopOnly>
-                        Ledger DAPP Browser
+                        Ledger DApp Browser
                         {
                             accounts.length > 0 ? (
                                 <AccountSelector
@@ -472,7 +472,7 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
                         <Overlay>
                             <Loader>
                                 {
-                                    !connected ? "Connecting ..." : fetchingAccounts ? "Loading accounts ..." : accounts.length === 0 ? "You don't have any accounts" : "Loading DAPP ..."
+                                    !connected ? "Connecting ..." : fetchingAccounts ? "Loading accounts ..." : accounts.length === 0 ? "You don't have any accounts" : "Loading DApp ..."
                                 }
                             </Loader>
                         </Overlay>
