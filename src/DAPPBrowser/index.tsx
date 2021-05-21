@@ -1,7 +1,7 @@
 import React from "react";
-import styled, { keyframes } from "styled-components";
-import { AccountSelector } from "./AccountSelector";
-import { AccountRequest } from "./AccountRequest";
+import styled, { css, keyframes } from "styled-components";
+import AccountSelector from "./AccountSelector";
+import AccountRequest from "./AccountRequest";
 import LedgerLiveApi from '../../lib/LedgerLiveApiSdk';
 import LedgerLiveApiMock from '../../lib/LedgerLiveApiSdkMock';
 import WindowMessageTransport from '../../lib/WindowMessageTransport';
@@ -13,6 +13,9 @@ import {JSONRPCRequest, JSONRPCResponse} from "json-rpc-2.0";
 import {Account} from "../../lib/types";
 import {ChainConfig} from "./types";
 // import {ChainSelector} from "./ChainSelector";
+
+const desktopMQ = `@media only screen and (min-width: 600px)`;
+const mobileMQ = `@media only screen and (max-width: 600px)`;
 
 const loading = keyframes`
   0% { opacity:0.8; }
@@ -67,15 +70,26 @@ const Overlay = styled.div`
 
 const DappBrowserControlBar = styled.div`
   box-sizing: border-box;
-  padding: 12px 16px;
+  padding: 16px;
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: space-between;
-  order: 2;
+  justify-content: flex-end;
 
-  @media only screen and (min-width: 600px) {
-    order: 1;
+  ${(p: { desktop?: boolean, mobile?: boolean}) => p.desktop && css`
+    ${mobileMQ} {
+      display: none;
+    }`
+  }
+
+  ${(p: { desktop?: boolean, mobile?: boolean}) => p.mobile && css`
+    ${desktopMQ} {
+      display: none;
+    }`
+  }
+
+  ${mobileMQ} {
+    padding: 12px;
   }
 `;
 
@@ -83,41 +97,13 @@ const DappContainer = styled.div`
   width: 100%;
   flex: 1;
   position: relative;
-  order: 1;
-
-  @media only screen and (min-width: 600px) {
-    order: 2;
-  }
 `;
 
 const DappIframe = styled.iframe`
-    width: 100%;
-    height: 100%;
-    border: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
 `;
-
-const MobileOnly = styled.div`
-    width: 100%;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-
-    @media only screen and (min-width: 600px) {
-        display: none;
-    }
-`
-const DesktopOnly = styled.div`
-    width: 100%;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-
-    @media only screen and (max-width: 600px) {
-        display: none;
-    }
-`
 
 type DAPPBrowserProps = {
     dappUrl: string,
@@ -310,7 +296,8 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
 
         try {
             const payload = {
-                currencies: [selectedChainConfig.currency]
+                currencies: [selectedChainConfig.currency],
+                allowAddAccount: true,
             };
             const account = await this.ledgerAPI.requestAccount(payload);
             this.selectAccount(account);
@@ -436,26 +423,13 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
 
         return (
             <AppLoaderPageContainer>
-                <DappBrowserControlBar>
-                    {accounts.length > 0 ? 
-                        <MobileOnly>
-                            <AccountRequest
-                                selectedAccount={selectedAccount}
-                                onRequestAccount={this.requestAccount}
-                            />
-                        </MobileOnly>
-                    : null}
-                    <DesktopOnly>
-                        Ledger DApp Browser
-                        {
-                            accounts.length > 0 ? (
-                                <AccountSelector
-                                    selectedAccount={selectedAccount}
-                                    accounts={accounts}
-                                    onAccountChange={this.selectAccount}
-                                />
-                            ) : null
-                        }
+                {!!accounts.length &&
+                    <DappBrowserControlBar desktop>
+                        <AccountSelector
+                            selectedAccount={selectedAccount}
+                            accounts={accounts}
+                            onAccountChange={this.selectAccount}
+                        />
                         {
                             //                             chainConfigs.length > 0 ? (
                             //                                 <ChainSelector
@@ -465,8 +439,8 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
                             //                                 />
                             //                             ) : null
                         }
-                    </DesktopOnly>
-                </DappBrowserControlBar>
+                    </DappBrowserControlBar>
+                }
                 <DappContainer>
                     <CSSTransition in={clientLoaded} timeout={300} classNames="overlay">
                         <Overlay>
@@ -487,6 +461,14 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
                         ) : null
                     }
                 </DappContainer>
+                {!!accounts.length &&
+                    <DappBrowserControlBar mobile>
+                        <AccountRequest
+                            selectedAccount={selectedAccount}
+                            onRequestAccount={this.requestAccount}
+                        />
+                    </DappBrowserControlBar>
+                }
             </AppLoaderPageContainer>
         )
     }
