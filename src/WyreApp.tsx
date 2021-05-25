@@ -85,7 +85,7 @@ const getWyre = (deviceToken: string, account: Account, currencies: Currency[]) 
 
   // @ts-ignore
   return new window.Wyre({
-    env: "test",
+    env: "prod",
     auth: {
       type: "secretKey",
       secretKey: deviceToken
