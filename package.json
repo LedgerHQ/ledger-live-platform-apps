@@ -9,9 +9,6 @@
     "tslint": "tslint -c tslint.json 'src/**/*.ts' 'pages/**/*.ts'"
   },
   "dependencies": {
-    "@types/bn.js": "^5.1.0",
-    "@types/color": "^3.0.1",
-    "@xstate/react": "^1.3.2",
     "axios": "^0.21.1",
     "bignumber.js": "^9.0.1",
     "color": "^3.1.3",
@@ -20,17 +17,16 @@
     "next": "10.0.9",
     "react": "17.0.1",
     "react-dom": "17.0.1",
-    "react-modal": "^3.12.1",
     "react-select": "^4.3.0",
     "react-transition-group": "^4.4.1",
-    "styled-components": "^5.2.1",
-    "xstate": "^4.18.0"
+    "styled-components": "^5.2.1"
   },
   "devDependencies": {
+    "@types/bn.js": "^5.1.0",
+    "@types/color": "^3.0.1",
     "@types/axios": "^0.14.0",
     "@types/bignumber.js": "^5.0.0",
     "@types/node": "^14.14.35",
-    "@types/react-modal": "^3.12.0",
     "@types/react-select": "^4.0.14",
     "@types/react-transition-group": "^4.4.1",
     "@types/styled-components": "^5.1.9",
