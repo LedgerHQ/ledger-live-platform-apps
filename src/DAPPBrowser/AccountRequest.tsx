@@ -39,20 +39,26 @@ type AccountRequestProps = {
     selectedAccount: Account | undefined,
 };
 
-export function AccountRequest({ onRequestAccount, selectedAccount }: AccountRequestProps) {
+function AccountRequest({ onRequestAccount, selectedAccount }: AccountRequestProps) {
     return (
         <Row>
             <AccountDisplay>
-                <AccountIcon>
-                    <Image src="/icons/ethereum.svg" width={24} height={24} />
-                </AccountIcon>
-                <AccountName>
-                    {selectedAccount?.name}
-                </AccountName>
+                { selectedAccount
+                    ? <>
+                        <AccountIcon>
+                            <Image src="/icons/ethereum.svg" width={24} height={24} />
+                        </AccountIcon>
+                        <AccountName>
+                            {selectedAccount?.name}
+                        </AccountName>
+                    </>
+                    : null} 
             </AccountDisplay>
             <Button transparent small onClick={onRequestAccount}>
-                Change account
+                {selectedAccount ? "Change account" : "Add Account"}
             </Button>
         </Row>
     )
 }
+
+export default AccountRequest;
