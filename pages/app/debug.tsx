@@ -49,7 +49,7 @@ const Output = styled.pre`
     ${(p: OutputProps) => p.type === "error" && css`color:${p.theme.colors.alert}`}
 `
 
-const PAYLOAD_SIGN = { family: "ethereum", recipient: "XXX", amount: "1" };
+const PAYLOAD_SIGN = { transaction: { family: "ethereum", recipient: "XXX", amount: "1" }, params: { useApp: "ethereum" } };
 const PAYLOAD_BROADCAST = { operation: {}, signature: "YYY", expirationDate: null };
 
 const ACTIONS = [
@@ -108,8 +108,9 @@ export default function DebugApp() {
                     break;
                 case "transaction.sign":
                     try {
-                        const transaction = deserializeTransaction(JSON.parse(rawPayload));
-                        action = api.current.signTransaction(account.id, transaction);
+                        const payload = JSON.parse(rawPayload);
+                        const transaction = deserializeTransaction(payload.transaction);
+                        action = api.current.signTransaction(account.id, transaction, payload?.params);
                     } catch (error) {
                         action = Promise.reject(error);
                     }
@@ -187,6 +188,7 @@ export default function DebugApp() {
                     <Field>
                         Method:
                         <Select
+                            instanceId="method"
                             options={ACTIONS}
                             onChange={handleMethodChange}
                             value={method}
@@ -196,6 +198,7 @@ export default function DebugApp() {
                     <Field>
                         Account:
                         <Select
+                            instanceId="account"
                             options={accounts}
                             onChange={handleAccountChange}
                             getOptionValue={option => option.id}

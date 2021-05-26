@@ -67,6 +67,7 @@ export function ChainSelector({ chainConfigs, onChainConfigChange, selectedChain
 
     return (
         <Select
+            instanceId="chain"
             options={options}
             styles={styles}
             onChange={handleOnChange}
