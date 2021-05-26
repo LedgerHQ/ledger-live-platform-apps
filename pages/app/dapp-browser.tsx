@@ -1,17 +1,10 @@
-import React, {useEffect, useMemo, useState} from "react";
-import {NextRouter, useRouter} from 'next/router';
-import {DAPPBrowser} from "../../src/DAPPBrowser";
-import {ChainConfig} from "../../src/DAPPBrowser/types";
+import React, { useEffect, useMemo, useState } from "react";
+import { useRouter } from 'next/router';
+import { DAPPBrowser } from "../../src/DAPPBrowser";
+import { ChainConfig} from "../../src/DAPPBrowser/types";
+import { getQueryVariable } from "../../src/helpers";
 
 const NODE_URL = "wss://eth-mainnet.ws.alchemyapi.io/v2/0fyudoTG94QWC0tEtfJViM9v2ZXJuij2";
-
-function getQueryVariable(name: string,router: NextRouter): string | undefined {
-    const queryVariable = router.query[name];
-    if (queryVariable) {
-        return !Array.isArray(queryVariable) ? queryVariable : queryVariable[0]
-    }
-    return undefined;
-}
 
 function DappBrowserPage() {
     const [mounted, setMounted] = useState(false);

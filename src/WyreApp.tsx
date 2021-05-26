@@ -44,20 +44,14 @@ const SubmitButtom = styled(Button)`
   flex-grow: 1;
 `
 
-const AccountDisplay = styled.div`
-  border-color: ${p => p.theme.colors.text};
-  border-width: 1px;
-  border-style: solid;
-  border-radius: 4px;
-  padding: 12px 16px;
-  font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-`
-
-function useDeviceToken() {
+function useDeviceToken(): [string | null, Function] {
   const [deviceToken, setDeviceToken] = useState(window.localStorage.getItem("DEVICE_TOKEN"));
+
+  const updateToken = useCallback((token) => {
+    window.localStorage.setItem("DEVICE_TOKEN", token);
+  
+    setDeviceToken(token);
+  }, []);
 
   useEffect(() => {
     if (!deviceToken) {
@@ -66,17 +60,15 @@ function useDeviceToken() {
       const token = Array.prototype.map
           .call(array, x => ("00" + x.toString(16)).slice(-2))
           .join("");
-      window.localStorage.setItem("DEVICE_TOKEN", token);
-  
-      setDeviceToken(token);
+      updateToken(token);
     }
   }, [deviceToken]);
 
 
-  return deviceToken;
+  return [deviceToken, updateToken];
 }
 
-const getWyre = (deviceToken: string, account: Account, currencies: Currency[]) => {
+const getWyre = (env: string, deviceToken: string, account: Account, currencies: Currency[]) => {
   const currency = currencies.find(currency => currency.id === account.currency);
 
   if (!currency) {
@@ -84,8 +76,8 @@ const getWyre = (deviceToken: string, account: Account, currencies: Currency[]) 
   }
 
   // @ts-ignore
-  return new window.Wyre({
-    env: "prod",
+  const wyreInstance = new window.Wyre({
+    env,
     auth: {
       type: "secretKey",
       secretKey: deviceToken
@@ -95,49 +87,46 @@ const getWyre = (deviceToken: string, account: Account, currencies: Currency[]) 
       destCurrency: currency.ticker,
       dest: `${account.currency}:${account.address.toLowerCase()}`,
     },
-    onExit: function (error: Error | null) {
-      if (error !== null) {
-        console.error(error)
-      } else {
-        console.log('exited!')
-      }
-    },
-    onSuccess: function () {
-      console.log("success!")
+  });
+
+  wyreInstance.on('close', (error: Error | null) => {
+    if (error !== null) {
+      console.error('error!', error);
+    } else {
+      console.log('closed!');
     }
   });
+  
+  wyreInstance.on('complete', () => {
+    console.log('complete!');
+  });
+
+  return wyreInstance;
 }
 
-export function WyreApp() {
+type Props = {
+  env: string,
+};
+
+export function WyreApp({ env }: Props) {
   const api = useRef<LedgerLiveApi | null>(null);
   const [currencies, setCurrencies] = useState<Currency[]>([]);
-  const [account, setAccount] = useState<Account | null>(null);
-  const deviceToken = useDeviceToken();
-
-
-  const selectAccount = useCallback(async () => {
-    if (api.current) {
-      try {
-        const account = await api.current.requestAccount({ allowAddAccount: true, currencies: SUPPORTED_CURRENCIES });
-        setAccount(account);
-      } catch (error) {
-        // ignore error
-      }
-    }
-  }, [api.current, account]);
+  const [deviceToken /*, updateToken*/]  = useDeviceToken();
 
   const submit = useCallback(async () => {
-    if (api.current && deviceToken && account && currencies.length) {
+    if (api.current && deviceToken && currencies.length) {
       try {
+        const account = await api.current.requestAccount({ allowAddAccount: true, currencies: SUPPORTED_CURRENCIES });
+
         const address = await api.current.receive(account.id);
         if (account.address === address) {
-          getWyre(deviceToken, account, currencies).open();
+          getWyre(env, deviceToken, account, currencies).open();
         }
       } catch (error) {
         // ignore error
       }
     }
-  }, [getWyre, api.current, deviceToken, currencies, account]);
+  }, [getWyre, env, api.current, deviceToken, currencies]);
 
   useEffect(() => {
     const llapi = new LedgerLiveApi(new WindowMessageTransport());
@@ -155,22 +144,26 @@ export function WyreApp() {
     }
   }, []);
 
+  useEffect(() => {
+    if (api.current && currencies) {
+      submit();
+    }
+  }, [currencies])
+
+  // const handleTokenChange = useCallback((event) => {
+  //   updateToken(event.target.value || null);
+  // }, [updateToken]);
+
   return (
   <>
     <Container>
-      
       <Panel>
         <Logo>
             <Image src="/icons/wyre.svg" width={96} height={96} />
         </Logo>
-        {account
-          ? <>
-            <AccountDisplay>{account.name}</AccountDisplay>
-            <SubmitButtom transparent onClick={selectAccount}>Change Account</SubmitButtom>
-          </>
-          : <SubmitButtom onClick={selectAccount}>Select Account</SubmitButtom>
-        }
-        <SubmitButtom disabled={!account} onClick={submit}>Continue</SubmitButtom>
+        {/* <input type="text" value={deviceToken || ""} onChange={handleTokenChange} /> */}
+
+        <SubmitButtom onClick={submit}>Select Account</SubmitButtom>
       </Panel>
     </Container>
   </>);
