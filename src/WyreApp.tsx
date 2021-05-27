@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import styled from "styled-components";
 import Image from 'next/image'
 
@@ -8,7 +8,21 @@ import { Account, Currency } from "../lib/types";
 
 import Button from './components/Button';
 
+type WyreConfig = {
+  accountId?: string,
+};
+
 const SUPPORTED_CURRENCIES = ["ethereum", "bitcoin"];
+
+const WYRE_CONFIG: { [key: string]: WyreConfig } = {
+  prod: {
+    accountId: "AC_32F8LN6LYU9",
+  },
+  test: {
+    accountId: "AC_Y2GAHJA6F9G",
+  },
+}
+
 
 const Container = styled.div`
   width: 100%;
@@ -69,6 +83,8 @@ function useDeviceToken(): [string | null, Function] {
 }
 
 const getWyre = (env: string, deviceToken: string, account: Account, currencies: Currency[]) => {
+  const config = WYRE_CONFIG[env];
+  const accountId = config?.accountId;
   const currency = currencies.find(currency => currency.id === account.currency);
 
   if (!currency) {
@@ -78,6 +94,7 @@ const getWyre = (env: string, deviceToken: string, account: Account, currencies:
   // @ts-ignore
   const wyreInstance = new window.Wyre({
     env,
+    accountId,
     auth: {
       type: "secretKey",
       secretKey: deviceToken
@@ -104,14 +121,12 @@ const getWyre = (env: string, deviceToken: string, account: Account, currencies:
   return wyreInstance;
 }
 
-type Props = {
-  env: string,
-};
-
-export function WyreApp({ env }: Props) {
+export function WyreApp() {
   const api = useRef<LedgerLiveApi | null>(null);
   const [currencies, setCurrencies] = useState<Currency[]>([]);
   const [deviceToken /*, updateToken*/]  = useDeviceToken();
+  // next.js gives wrong data sometimes...so...
+  const env = useMemo(() => new URLSearchParams(window.location.search).get('env') || "prod", [window.location]);
 
   const submit = useCallback(async () => {
     if (api.current && deviceToken && currencies.length) {
