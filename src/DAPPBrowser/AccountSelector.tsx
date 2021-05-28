@@ -120,6 +120,7 @@ function AccountSelector({ accounts, onAccountChange, selectedAccount }: Account
     return (
         <div>
         <Select
+            instanceId="account"
             options={options}
             styles={styles}
             components={{ SingleValue: AccountSummary, Option: AccountOption}}

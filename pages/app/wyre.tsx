@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Head from 'next/head';
+
 import { WyreApp } from "../../src/WyreApp";
 
 
@@ -10,7 +11,6 @@ function DappBrowserPage() {
         setMounted(true);
         return () => setMounted(false);
     }, []);
-
 
     return (<>
       <Head>
