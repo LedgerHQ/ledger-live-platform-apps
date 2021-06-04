@@ -9,16 +9,25 @@ import { Account, Currency } from "../lib/types";
 import Button from './components/Button';
 
 type WyreConfig = {
+  env: string,
   accountId?: string,
+  transferNotifyUrl?: string,
 };
 
 const SUPPORTED_CURRENCIES = ["ethereum", "bitcoin"];
 
 const WYRE_CONFIG: { [key: string]: WyreConfig } = {
   prod: {
-    accountId: "AC_32F8LN6LYU9",
+    env: "prod",
+    accountId: "AC_UU28B4A64QA",
+    transferNotifyUrl: "https://hooks.stitchdata.com/v1/clients/167870/token/33763f1bac7da4fe839aadc5462f7b4e41800de30080cf666fe826c0b9a1a649",
+  },
+  staging: {
+    env: "prod",
+    accountId: "AC_32F8LN6LYU9", // Real prod environment, but linked to an account for testing purpose
   },
   test: {
+    env: "test",
     accountId: "AC_Y2GAHJA6F9G",
   },
 }
@@ -93,8 +102,9 @@ const getWyre = (env: string, deviceToken: string, account: Account, currencies:
 
   // @ts-ignore
   const wyreInstance = new window.Wyre({
-    env,
+    env: config.env,
     accountId,
+    transferNotifyUrl: config.transferNotifyUrl || undefined,
     auth: {
       type: "secretKey",
       secretKey: deviceToken
@@ -106,8 +116,9 @@ const getWyre = (env: string, deviceToken: string, account: Account, currencies:
     },
   });
 
-  wyreInstance.on('close', (error: Error | null) => {
-    if (error !== null) {
+  wyreInstance.on('close', (error: Error | {} | null) => {
+    // When closing, it returns an empty object.
+    if (error !== null && Object.keys(error).length) {
       console.error('error!', error);
     } else {
       console.log('closed!');
