@@ -171,6 +171,8 @@ export default class LedgerLiveApi {
      * @returns {EstimatedFees} - Estimated fees for 3 level of confirmation speed
      */
     async estimateTransactionFees(accountId: string, transaction: Transaction): Promise<EstimatedFees> {
+        accountId;
+        transaction;
         throw new Error('Function is not implemented yet');
     }
 
@@ -181,6 +183,7 @@ export default class LedgerLiveApi {
      * @returns {Account} An updated view of the account 
      */
     async synchronizeAccount(accountId: string): Promise<Account> {
+        accountId;
         throw new Error('Function is not implemented yet');
     }
 
@@ -192,6 +195,8 @@ export default class LedgerLiveApi {
      * @returns {string} The nonce of the exchange
      */
     async initExchange(exchangeType: ExchangeType, partnerName: String): Promise<string> {
+        exchangeType;
+        partnerName;
         throw new Error('Function is not implemented yet');
     }
 
@@ -202,6 +207,9 @@ export default class LedgerLiveApi {
      * @param {FeesLevel} txFeesLevel 
      */
     async completeExchange(exchangePayload: ExchangePayload, payloadSignature: EcdsaSignature, txFeesLevel: FeesLevel): Promise<void> {
+        exchangePayload;
+        payloadSignature;
+        txFeesLevel;
         throw new Error('Function is not implemented yet');
     }
 
@@ -231,6 +239,8 @@ export default class LedgerLiveApi {
      * @returns {Promise<Result>} The result of the handler function
      */
     async bridgeApp<Result>(appName: string, handler: <Result>(deviceBridge: DeviceBridge) => Promise<Result>): Promise<Result> {
+        appName;
+        handler;
         throw new Error('Function is not implemented yet');
     }
 
@@ -241,6 +251,7 @@ export default class LedgerLiveApi {
      * @returns {Promise<Result>} The result of the handler function
      */
     async bridgeDashboard<Result>(handler: <Result>(deviceBridge: DeviceBridge) => Promise<Result>): Promise<Result> {
+        handler;
         throw new Error('Function is not implemented yet');
     }
 
