@@ -1,24 +1,34 @@
 
 import { JSONRPCServerAndClient, JSONRPCClient, JSONRPCServer, JSONRPCParams } from "json-rpc-2.0";
-import { 
+import {
     RequestAccountParams,
     ListCurrenciesParams,
     SignTransactionParams,
-    Transport
+    Transport,
+    ExchangeType,
+    ExchangePayload,
+    EstimatedFees,
+    FeesLevel,
+    EcdsaSignature,
+    DeviceDetails,
+    ApplicationDetails
 } from './LedgerLiveApiSdk.types';
 import {
-    Account, 
-    Currency, 
-    Transaction, 
-    SignedTransaction
+    Account,
+    Currency,
+    Transaction,
+    SignedTransaction,
 } from "./types";
 import {
-    deserializeAccount, 
-    serializeTransaction, 
-    deserializeSignedTransaction, 
+    deserializeAccount,
+    serializeTransaction,
+    deserializeSignedTransaction,
     serializeSignedTransaction,
 } from "./serializers";
 import Logger from './logger';
+import {
+    DeviceBridge
+} from './DeviceBridge'
 
 const defaultLogger = new Logger('LL-API');
 
@@ -26,7 +36,7 @@ export default class LedgerLiveApi {
     private transport: Transport;
     private logger: Logger;
     private serverAndClient?: JSONRPCServerAndClient;
-    
+
     constructor(transport: Transport, logger: Logger = defaultLogger) {
         this.transport = transport;
         this.logger = logger;
@@ -35,8 +45,7 @@ export default class LedgerLiveApi {
     /**
      * Wrapper to api request for logging
      */
-
-     private async _request(method: string, params?: JSONRPCParams | undefined, clientParams?: void | undefined): Promise<any> {
+    private async _request(method: string, params?: JSONRPCParams | undefined, clientParams?: void | undefined): Promise<any> {
         if (!this.serverAndClient) {
             this.logger.error(`not connected`, method);
             throw new Error("Ledger Live API not connected");
@@ -86,8 +95,8 @@ export default class LedgerLiveApi {
      * @returns Account
      */
     async requestAccount(params: RequestAccountParams): Promise<Account> {
-        const rawAccount = await this._request('account.request', params || {});
-        
+        const rawAccount = await this._request('account.request', params || {});
+
         return deserializeAccount(rawAccount);
     }
 
@@ -109,7 +118,7 @@ export default class LedgerLiveApi {
      * @returns {Currency[]}
      */
     async listCurrencies(params?: ListCurrenciesParams): Promise<Currency[]> {
-        return this._request('currency.list', params || {});
+        return this._request('currency.list', params || {});
     }
 
     /**
@@ -134,7 +143,7 @@ export default class LedgerLiveApi {
         const rawSignedTransaction = await this._request('transaction.sign', {
             accountId,
             transaction: serializeTransaction(transaction),
-            params: params || {},
+            params: params || {},
         });
 
         return deserializeSignedTransaction(rawSignedTransaction);
@@ -153,4 +162,86 @@ export default class LedgerLiveApi {
             signedTransaction: serializeSignedTransaction(signedTransaction),
         });
     }
+
+    /**
+     * Estimate fees required to successfully broadcast a transaction.
+     * @param {string} accountId - LL id of the account
+     * @param {Transaction} transaction - the transaction to estimate
+     * 
+     * @returns {EstimatedFees} - Estimated fees for 3 level of confirmation speed
+     */
+    async estimateTransactionFees(accountId: string, transaction: Transaction): Promise<EstimatedFees> {
+        throw new Error('Function is not implemented yet');
+    }
+
+    /**
+     * Synchronize an account with its network and return an updated view of the account
+     * @param {string} accountId The id of the account to synchronize
+     * 
+     * @returns {Account} An updated view of the account 
+     */
+    async synchronizeAccount(accountId: string): Promise<Account> {
+        throw new Error('Function is not implemented yet');
+    }
+
+    /**
+     * Start the exchange process by generating a nonce on Ledger device
+     * @param {ExchangeType} exchangeType 
+     * @param {string} partnerName 
+     * 
+     * @returns {string} The nonce of the exchange
+     */
+    async initExchange(exchangeType: ExchangeType, partnerName: String): Promise<string> {
+        throw new Error('Function is not implemented yet');
+    }
+
+    /**
+     * Complete an exchange process by passing by the exchange content and its signature.
+     * @param {ExchangePayload} exchangePayload
+     * @param {EcdsaSignature} payloadSignature  
+     * @param {FeesLevel} txFeesLevel 
+     */
+    async completeExchange(exchangePayload: ExchangePayload, payloadSignature: EcdsaSignature, txFeesLevel: FeesLevel): Promise<void> {
+        throw new Error('Function is not implemented yet');
+    }
+
+    /**
+     * Get information about a currently connected device (firmware version...)
+     * 
+     * @returns {Promise<DeviceDetails>} Informations about a currently connected device
+     */
+    async getDeviceInfo(): Promise<DeviceDetails> {
+        throw new Error('Function is not implemented yet');
+    }
+
+    /**
+     * List applications opened on a currently connected device
+     * 
+     * @returns {Promise<ApplicationDetails[]>} The list of applications
+     */
+    async listApps(): Promise<ApplicationDetails[]> {
+        throw new Error('Function is not implemented yet');
+    }
+
+    /**
+     * Open a bridge to an application to exchange APDUs with a device application
+     * @param {string} appName The name of the application to bridge
+     * @param {<Result>(DeviceBridge) => Promise<Result>} handler A function using the bridge to send command to a device
+     * 
+     * @returns {Promise<Result>} The result of the handler function
+     */
+    async bridgeApp<Result>(appName: string, handler: <Result>(deviceBridge: DeviceBridge) => Promise<Result>): Promise<Result> {
+        throw new Error('Function is not implemented yet');
+    }
+
+    /**
+     * Open a bridge to a the device dashboard to exchange APDUs
+     * @param {<Result>(DeviceBridge) => Promise<Result>} handler A function using the bridge to send command to a device
+     * 
+     * @returns {Promise<Result>} The result of the handler function
+     */
+    async bridgeDashboard<Result>(handler: <Result>(deviceBridge: DeviceBridge) => Promise<Result>): Promise<Result> {
+        throw new Error('Function is not implemented yet');
+    }
+
 }
