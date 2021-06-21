@@ -1,21 +1,24 @@
 import React from "react";
-import styled, { css, keyframes } from "styled-components";
-import AccountSelector from "./AccountSelector";
-import AccountRequest from "./AccountRequest";
+import styled, { keyframes } from "styled-components";
+import { JSONRPCRequest, JSONRPCResponse } from "json-rpc-2.0";
+import CSSTransition from "react-transition-group/CSSTransition";
+
+import { Account } from "../../lib/types";
 import LedgerLiveApi from '../../lib/LedgerLiveApiSdk';
 import LedgerLiveApiMock from '../../lib/LedgerLiveApiSdkMock';
 import WindowMessageTransport from '../../lib/WindowMessageTransport';
 
-import {SmartWebsocket} from "./SmartWebsocket";
-import CSSTransition from "react-transition-group/CSSTransition";
-import {convertEthToLiveTX} from "./helper";
-import {JSONRPCRequest, JSONRPCResponse} from "json-rpc-2.0";
-import {Account} from "../../lib/types";
-import {ChainConfig} from "./types";
+import AccountSelector from "../components/AccountSelector";
+import AccountRequest from "../components/AccountRequest";
+import ControlBar from "../components/ControlBar";
+
+import { SmartWebsocket } from "./SmartWebsocket";
+import { convertEthToLiveTX } from "./helper";
+
+import { ChainConfig } from "./types";
 // import {ChainSelector} from "./ChainSelector";
 
-const desktopMQ = `@media only screen and (min-width: 600px)`;
-const mobileMQ = `@media only screen and (max-width: 600px)`;
+
 
 const loading = keyframes`
   0% { opacity:0.8; }
@@ -65,31 +68,6 @@ const Overlay = styled.div`
   }
   &.overlay-exit-done {
     opacity: 1;
-  }
-`
-
-const DappBrowserControlBar = styled.div`
-  box-sizing: border-box;
-  padding: 16px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-end;
-
-  ${(p: { desktop?: boolean, mobile?: boolean}) => p.desktop && css`
-    ${mobileMQ} {
-      display: none;
-    }`
-  }
-
-  ${(p: { desktop?: boolean, mobile?: boolean}) => p.mobile && css`
-    ${desktopMQ} {
-      display: none;
-    }`
-  }
-
-  ${mobileMQ} {
-    padding: 12px;
   }
 `;
 
@@ -424,7 +402,7 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
         return (
             <AppLoaderPageContainer>
                 {!!accounts.length &&
-                    <DappBrowserControlBar desktop>
+                    <ControlBar desktop>
                         <AccountSelector
                             selectedAccount={selectedAccount}
                             accounts={accounts}
@@ -439,7 +417,7 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
                             //                                 />
                             //                             ) : null
                         }
-                    </DappBrowserControlBar>
+                    </ControlBar>
                 }
                 <DappContainer>
                     <CSSTransition in={clientLoaded} timeout={300} classNames="overlay">
@@ -462,12 +440,12 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
                     }
                 </DappContainer>
                 {!!accounts.length &&
-                    <DappBrowserControlBar mobile>
+                    <ControlBar mobile>
                         <AccountRequest
                             selectedAccount={selectedAccount}
                             onRequestAccount={this.requestAccount}
                         />
-                    </DappBrowserControlBar>
+                    </ControlBar>
                 }
             </AppLoaderPageContainer>
         )
