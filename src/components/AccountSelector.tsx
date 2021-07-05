@@ -4,7 +4,7 @@ import Image from 'next/image'
 import styled, { useTheme, DefaultTheme } from "styled-components";
 import Color from "color";
 
-import {Account} from "../../lib/types";
+import { Account } from "../../lib/types";
 
 const IconContainer = styled.div`
     margin-right: 0.4em;
