@@ -70,8 +70,10 @@ export default class WindowMessageTransport implements Transport {
         //@ts-ignore
         this.target.ReactNativeWebView.postMessage(JSON.stringify(response))
       }
+      //@ts-ignore
       else if (this.target.ElectronWebview) {
         this.logger.log('sending message (ElectronWebview)', response);
+        //@ts-ignore
         this.target.ElectronWebview.postMessage(JSON.stringify(response))
       }
       else {
