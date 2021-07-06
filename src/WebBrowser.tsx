@@ -210,6 +210,10 @@ export class WebBrowser extends React.Component<WebBrowserProps, WebBrowserState
             selectedAccount,
         } = this.state;
 
+        const {
+            webAppName
+        } = this.props;
+
         const url = this.getUrl();
 
         return (
@@ -228,7 +232,7 @@ export class WebBrowser extends React.Component<WebBrowserProps, WebBrowserState
                         <Overlay>
                             <Loader>
                                 {
-                                    !connected ? "Connecting ..." : fetchingAccounts ? "Loading accounts ..." : accounts.length === 0 ? "You don't have any accounts" : "Loading App ..."
+                                    !connected ? "Connecting ..." : fetchingAccounts ? "Loading accounts ..." : accounts.length === 0 ? "You don't have any accounts" : `Loading ${webAppName} ...`
                                 }
                             </Loader>
                         </Overlay>

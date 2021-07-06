@@ -10,7 +10,7 @@ function DappBrowserPage() {
     const [mounted, setMounted] = useState(false);
     const router = useRouter();
 
-    const dappName = getQueryVariable("dappName", router) || "unknown";
+    const dappName = getQueryVariable("dappName", router) || "DApp";
     const dappUrl = getQueryVariable("url", router);
     const nanoApp = getQueryVariable("nanoApp", router);
     const nodeURL = getQueryVariable("nodeURL", router) || NODE_URL;

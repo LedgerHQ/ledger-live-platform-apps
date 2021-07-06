@@ -7,7 +7,7 @@ function WebBrowserPage() {
     const [mounted, setMounted] = useState(false);
     const router = useRouter();
 
-    const webAppName = getQueryVariable("webAppName", router) || "unknown";
+    const webAppName = getQueryVariable("webAppName", router) || "DApp";
     const webUrl = getQueryVariable("url", router);
     const isMock = getQueryVariable("mock", router)  === "true";
     const currencies = getQueryArray("currencies", router) || [];
