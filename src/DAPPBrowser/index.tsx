@@ -396,6 +396,7 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
 
         const {
             dappUrl,
+            dappName,
             // chainConfigs,
         } = this.props;
 
@@ -424,7 +425,7 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
                         <Overlay>
                             <Loader>
                                 {
-                                    !connected ? "Connecting ..." : fetchingAccounts ? "Loading accounts ..." : accounts.length === 0 ? "You don't have any accounts" : "Loading DApp ..."
+                                    !connected ? "Connecting ..." : fetchingAccounts ? "Loading accounts ..." : accounts.length === 0 ? "You don't have any accounts" : `Loading ${dappName} ...`
                                 }
                             </Loader>
                         </Overlay>
