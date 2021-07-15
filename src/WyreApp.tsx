@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
-import styled from "styled-components";
+import styled, { useTheme } from "styled-components";
 import Image from 'next/image'
 
 import LedgerLiveApi from '../lib/LedgerLiveApiSdk';
@@ -13,6 +13,12 @@ type WyreConfig = {
   accountId?: string,
   transferNotifyUrl?: string,
 };
+
+type ThemeProps = {
+  colors: {
+    [key: string]: string
+  }
+}
 
 const SUPPORTED_CURRENCIES = ["ethereum", "bitcoin"];
 
@@ -40,18 +46,19 @@ const Container = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+  text-align: center;
 `
 
 const Panel = styled.div`
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: 340px;
+  max-width: 370px;
   align-items: stretch;
   justify-content: center;
 
   > * {
-    margin-bottom: 8px;
+    margin-bottom: 24px;
   }
   
   > *:last-child {
@@ -60,11 +67,40 @@ const Panel = styled.div`
 `
 const Logo = styled.div`
   text-align: center;
-  margin-bottom: 32px;
+  width: 48px;
+  align-self: center;
 `
 
 const SubmitButtom = styled(Button)`
   flex-grow: 1;
+`
+
+const Title = styled.h1`
+  font-size: 22px;
+  margin-top: 0;
+`
+
+const List = styled.ul`
+  padding: 0;
+  margin: 0;
+  margin-bottom: 24px;
+
+  li {
+    display: inline-block;
+    margin-bottom: 8px;
+    line-height: 20px;
+    color: ${(props: ThemeProps) => props.colors.text};
+
+    span {
+      opacity: 0.7;
+    }
+
+    &:before {
+      content: '•';
+      padding-right: 10px;
+      color: ${(props:  ThemeProps) => props.colors.primary};
+    }
+  }
 `
 
 function useDeviceToken(): [string | null, Function] {
@@ -133,6 +169,7 @@ const getWyre = (env: string, deviceToken: string, account: Account, currencies:
 }
 
 export function WyreApp() {
+  const {colors} = useTheme();
   const api = useRef<LedgerLiveApi | null>(null);
   const [currencies, setCurrencies] = useState<Currency[]>([]);
   const [deviceToken /*, updateToken*/]  = useDeviceToken();
@@ -175,7 +212,7 @@ export function WyreApp() {
       submit();
     }
   }, [currencies])
-
+  
   // const handleTokenChange = useCallback((event) => {
   //   updateToken(event.target.value || null);
   // }, [updateToken]);
@@ -187,6 +224,13 @@ export function WyreApp() {
         <Logo>
             <Image src="/icons/wyre.svg" width={96} height={96} />
         </Logo>
+        <Title>Wyre</Title>
+        <List colors={colors}>
+          <li><span>Buy Bitcoin, Ethereum and more crypto safely</span></li>
+          <li><span>Only 🇺🇸 bank account</span></li>
+          <li><span>ACH transfer / No credit & debit cards </span></li>
+          <li><span>USD support only</span></li>
+        </List>
         {/* <input type="text" value={deviceToken || ""} onChange={handleTokenChange} /> */}
 
         <SubmitButtom onClick={submit}>Select Account</SubmitButtom>
