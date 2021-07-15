@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import CSSTransition from "react-transition-group/CSSTransition";
 import styled, { useTheme } from "styled-components";
 import Image from 'next/image'
 
@@ -7,6 +8,7 @@ import WindowMessageTransport from '../lib/WindowMessageTransport';
 import { Account, Currency } from "../lib/types";
 
 import Button from './components/Button';
+import Loader from './components/Loader';
 
 type WyreConfig = {
   env: string,
@@ -38,7 +40,6 @@ const WYRE_CONFIG: { [key: string]: WyreConfig } = {
   },
 }
 
-
 const Container = styled.div`
   width: 100%;
   height: 100%;
@@ -47,15 +48,34 @@ const Container = styled.div`
   align-items: center;
   justify-content: center;
   text-align: center;
-`
-
-const Panel = styled.div`
+  `
+  
+  const Panel = styled.div`
   display: flex;
   flex-direction: column;
   width: 100%;
   max-width: 370px;
   align-items: stretch;
   justify-content: center;
+
+  &.panel-blurring {
+    &-enter {
+      opacity: 1;
+      pointer-events: none;
+    }
+    &-enter-active, &-enter-done {
+      opacity: 0.1;
+      transition: opacity 0.5s ease-out;
+    }
+    &-exit {
+      opacity: 0.1;
+    }
+    &-exit-active {
+      opacity: 1;
+      pointer-events: initial;
+      transition: opacity 0.3s ease-in;
+    }
+  }
 
   > * {
     margin-bottom: 24px;
@@ -96,9 +116,33 @@ const List = styled.ul`
     }
 
     &:before {
-      content: '•';
+      content: "•";
       padding-right: 10px;
       color: ${(props:  ThemeProps) => props.colors.primary};
+    }
+  }
+`
+
+const LoaderContainer = styled.div`
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  &.loader-container {
+    &-enter {
+      opacity: 0;
+    }
+    &-enter-active {
+      opacity: 1;
+      transition: opacity 0.3s ease-out 0.4s;
+    }
+    &-exit {
+      opacity: 1;
+    }
+    &-exit-active {
+      opacity: 0;
+      transition: opacity 0.2s ease-in;
     }
   }
 `
@@ -127,7 +171,7 @@ function useDeviceToken(): [string | null, Function] {
   return [deviceToken, updateToken];
 }
 
-const getWyre = (env: string, deviceToken: string, account: Account, currencies: Currency[]) => {
+const getWyre = (env: string, deviceToken: string, account: Account, currencies: Currency[], setIsSubmiting: (isSubmiting: boolean) => void) => {
   const config = WYRE_CONFIG[env];
   const accountId = config?.accountId;
   const currency = currencies.find(currency => currency.id === account.currency);
@@ -159,11 +203,16 @@ const getWyre = (env: string, deviceToken: string, account: Account, currencies:
     } else {
       console.log('closed!');
     }
+    setIsSubmiting(false);
   });
   
   wyreInstance.on('complete', () => {
     console.log('complete!');
   });
+
+  wyreInstance.on('ready', () => {
+    setIsSubmiting(false);
+  })
 
   return wyreInstance;
 }
@@ -173,20 +222,23 @@ export function WyreApp() {
   const api = useRef<LedgerLiveApi | null>(null);
   const [currencies, setCurrencies] = useState<Currency[]>([]);
   const [deviceToken /*, updateToken*/]  = useDeviceToken();
+  const [isSubmiting, setIsSubmiting] = useState(false);
   // next.js gives wrong data sometimes...so...
   const env = useMemo(() => new URLSearchParams(window.location.search).get('env') || "prod", [window.location]);
 
   const submit = useCallback(async () => {
     if (api.current && deviceToken && currencies.length) {
       try {
-        const account = await api.current.requestAccount({ allowAddAccount: true, currencies: SUPPORTED_CURRENCIES });
+        setIsSubmiting(true);
 
+        const account = await api.current.requestAccount({ allowAddAccount: true, currencies: SUPPORTED_CURRENCIES });
         const address = await api.current.receive(account.id);
+
         if (account.address === address) {
-          getWyre(env, deviceToken, account, currencies).open();
+          getWyre(env, deviceToken, account, currencies, setIsSubmiting).open();
         }
       } catch (error) {
-        // ignore error
+        setIsSubmiting(false);
       }
     }
   }, [getWyre, env, api.current, deviceToken, currencies]);
@@ -214,21 +266,26 @@ export function WyreApp() {
   return (
   <>
     <Container>
-      <Panel>
-        <Logo>
-            <Image src="/icons/wyre.svg" width={96} height={96} />
-        </Logo>
-        <Title>Wyre</Title>
-        <List colors={colors}>
-          <li><span>Buy Bitcoin, Ethereum and more crypto safely</span></li>
-          <li><span>Only 🇺🇸 bank account</span></li>
-          <li><span>ACH transfer / No credit & debit cards </span></li>
-          <li><span>USD support only</span></li>
-        </List>
-        {/* <input type="text" value={deviceToken || ""} onChange={handleTokenChange} /> */}
+      <CSSTransition in={isSubmiting} timeout={{ appear: 0, enter: 700, exit: 300}} unmountOnExit classNames="loader-container">
+        <LoaderContainer><Loader>Loading</Loader></LoaderContainer>
+      </CSSTransition>
+      <CSSTransition in={isSubmiting} timeout={{ appear: 0, enter: 500, exit: 300 }} classNames="panel-blurring">
+        <Panel>
+          <Logo>
+              <Image src="/icons/wyre.svg" width={96} height={96} />
+          </Logo>
+          <Title>Wyre</Title>
+          <List colors={colors}>
+            <li><span>Buy Bitcoin, Ethereum and more crypto safely</span></li>
+            <li><span>Only 🇺🇸 bank account</span></li>
+            <li><span>ACH transfer / No credit & debit cards </span></li>
+            <li><span>USD support only</span></li>
+          </List>
+          {/* <input type="text" value={deviceToken || ""} onChange={handleTokenChange} /> */}
 
-        <SubmitButtom onClick={submit}>Select Account</SubmitButtom>
-      </Panel>
+          <SubmitButtom onClick={submit}>Select Account</SubmitButtom>
+        </Panel>
+      </CSSTransition>
     </Container>
   </>);
 }
