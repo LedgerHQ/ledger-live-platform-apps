@@ -207,12 +207,6 @@ export function WyreApp() {
     }
   }, []);
 
-  useEffect(() => {
-    if (api.current && currencies) {
-      submit();
-    }
-  }, [currencies])
-  
   // const handleTokenChange = useCallback((event) => {
   //   updateToken(event.target.value || null);
   // }, [updateToken]);
