@@ -86,6 +86,7 @@ const DappIframe = styled.iframe`
 type DAPPBrowserProps = {
     dappUrl: string,
     dappName: string,
+    theme?: string,
     nanoApp?: string,
     mock?: boolean,
     initialAccountId: string | undefined,
@@ -397,8 +398,14 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
         const {
             dappUrl,
             dappName,
+            theme,
             // chainConfigs,
         } = this.props;
+
+        const url = new URL(dappUrl);
+        if (theme) {
+            url.searchParams.set("theme", theme);
+        }
 
         return (
             <AppLoaderPageContainer>
@@ -434,7 +441,7 @@ export class DAPPBrowser extends React.Component<DAPPBrowserProps, DAPPBrowserSt
                         connected && accounts.length > 0 ? (
                             <DappIframe
                                 ref={this.iframeRef}
-                                src={dappUrl}
+                                src={url.toString()}
                                 onLoad={this.setClientLoaded}
                             />
                         ) : null

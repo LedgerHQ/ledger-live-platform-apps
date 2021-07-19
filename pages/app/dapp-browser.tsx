@@ -11,6 +11,7 @@ function DappBrowserPage() {
     const router = useRouter();
 
     const dappName = getQueryVariable("dappName", router) || "DApp";
+    const theme = getQueryVariable("theme", router);
     const dappUrl = getQueryVariable("url", router);
     const nanoApp = getQueryVariable("nanoApp", router);
     const nodeURL = getQueryVariable("nodeURL", router) || NODE_URL;
@@ -35,6 +36,7 @@ function DappBrowserPage() {
                     dappName={dappName}
                     dappUrl={dappUrl}
                     nanoApp={nanoApp}
+                    theme={theme}
                     chainConfigs={chainConfigs}
                     mock={isMock}
                     initialAccountId={initialAccountId}
