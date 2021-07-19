@@ -1,17 +1,23 @@
-import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+  useMemo,
+} from "react";
 import styled from "styled-components";
-import Image from 'next/image'
+import Image from "next/image";
 
-import LedgerLiveApi from '../lib/LedgerLiveApiSdk';
-import WindowMessageTransport from '../lib/WindowMessageTransport';
+import LedgerLiveApi from "../lib/LedgerLiveApiSdk";
+import WindowMessageTransport from "../lib/WindowMessageTransport";
 import { Account, Currency } from "../lib/types";
 
-import Button from './components/Button';
+import Button from "./components/Button";
 
 type WyreConfig = {
-  env: string,
-  accountId?: string,
-  transferNotifyUrl?: string,
+  env: string;
+  accountId?: string;
+  transferNotifyUrl?: string;
 };
 
 const SUPPORTED_CURRENCIES = ["ethereum", "bitcoin"];
@@ -20,7 +26,8 @@ const WYRE_CONFIG: { [key: string]: WyreConfig } = {
   prod: {
     env: "prod",
     accountId: "AC_UU28B4A64QA",
-    transferNotifyUrl: "https://hooks.stitchdata.com/v1/clients/167870/token/33763f1bac7da4fe839aadc5462f7b4e41800de30080cf666fe826c0b9a1a649",
+    transferNotifyUrl:
+      "https://hooks.stitchdata.com/v1/clients/167870/token/33763f1bac7da4fe839aadc5462f7b4e41800de30080cf666fe826c0b9a1a649",
   },
   staging: {
     env: "prod",
@@ -30,8 +37,7 @@ const WYRE_CONFIG: { [key: string]: WyreConfig } = {
     env: "test",
     accountId: "AC_Y2GAHJA6F9G",
   },
-}
-
+};
 
 const Container = styled.div`
   width: 100%;
@@ -40,7 +46,7 @@ const Container = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-`
+`;
 
 const Panel = styled.div`
   display: flex;
@@ -53,26 +59,28 @@ const Panel = styled.div`
   > * {
     margin-bottom: 8px;
   }
-  
+
   > *:last-child {
     margin-bottom: 0;
   }
-`
+`;
 const Logo = styled.div`
   text-align: center;
   margin-bottom: 32px;
-`
+`;
 
 const SubmitButtom = styled(Button)`
   flex-grow: 1;
-`
+`;
 
 function useDeviceToken(): [string | null, Function] {
-  const [deviceToken, setDeviceToken] = useState(window.localStorage.getItem("DEVICE_TOKEN"));
+  const [deviceToken, setDeviceToken] = useState(
+    window.localStorage.getItem("DEVICE_TOKEN")
+  );
 
   const updateToken = useCallback((token) => {
     window.localStorage.setItem("DEVICE_TOKEN", token);
-  
+
     setDeviceToken(token);
   }, []);
 
@@ -81,23 +89,29 @@ function useDeviceToken(): [string | null, Function] {
       let array = new Uint8Array(25);
       window.crypto.getRandomValues(array);
       const token = Array.prototype.map
-          .call(array, x => ("00" + x.toString(16)).slice(-2))
-          .join("");
+        .call(array, (x) => ("00" + x.toString(16)).slice(-2))
+        .join("");
       updateToken(token);
     }
   }, [deviceToken]);
 
-
   return [deviceToken, updateToken];
 }
 
-const getWyre = (env: string, deviceToken: string, account: Account, currencies: Currency[]) => {
+const getWyre = (
+  env: string,
+  deviceToken: string,
+  account: Account,
+  currencies: Currency[]
+) => {
   const config = WYRE_CONFIG[env];
   const accountId = config?.accountId;
-  const currency = currencies.find(currency => currency.id === account.currency);
+  const currency = currencies.find(
+    (currency) => currency.id === account.currency
+  );
 
   if (!currency) {
-    throw new Error('currency not found for account');
+    throw new Error("currency not found for account");
   }
 
   // @ts-ignore
@@ -107,7 +121,7 @@ const getWyre = (env: string, deviceToken: string, account: Account, currencies:
     transferNotifyUrl: config.transferNotifyUrl || undefined,
     auth: {
       type: "secretKey",
-      secretKey: deviceToken
+      secretKey: deviceToken,
     },
     operation: {
       type: "onramp",
@@ -116,33 +130,39 @@ const getWyre = (env: string, deviceToken: string, account: Account, currencies:
     },
   });
 
-  wyreInstance.on('close', (error: Error | {} | null) => {
+  wyreInstance.on("close", (error: Error | {} | null) => {
     // When closing, it returns an empty object.
     if (error !== null && Object.keys(error).length) {
-      console.error('error!', error);
+      console.error("error!", error);
     } else {
-      console.log('closed!');
+      console.log("closed!");
     }
   });
-  
-  wyreInstance.on('complete', () => {
-    console.log('complete!');
+
+  wyreInstance.on("complete", () => {
+    console.log("complete!");
   });
 
   return wyreInstance;
-}
+};
 
 export function WyreApp() {
   const api = useRef<LedgerLiveApi | null>(null);
   const [currencies, setCurrencies] = useState<Currency[]>([]);
-  const [deviceToken /*, updateToken*/]  = useDeviceToken();
+  const [deviceToken /*, updateToken*/] = useDeviceToken();
   // next.js gives wrong data sometimes...so...
-  const env = useMemo(() => new URLSearchParams(window.location.search).get('env') || "prod", [window.location]);
+  const env = useMemo(
+    () => new URLSearchParams(window.location.search).get("env") || "prod",
+    [window.location]
+  );
 
   const submit = useCallback(async () => {
     if (api.current && deviceToken && currencies.length) {
       try {
-        const account = await api.current.requestAccount({ allowAddAccount: true, currencies: SUPPORTED_CURRENCIES });
+        const account = await api.current.requestAccount({
+          allowAddAccount: true,
+          currencies: SUPPORTED_CURRENCIES,
+        });
 
         const address = await api.current.receive(account.id);
         if (account.address === address) {
@@ -158,7 +178,8 @@ export function WyreApp() {
     const llapi = new LedgerLiveApi(new WindowMessageTransport());
 
     llapi.connect();
-    llapi.listCurrencies()
+    llapi
+      .listCurrencies()
       .then((currencies) => setCurrencies(currencies))
       .then(() => {
         api.current = llapi;
@@ -167,30 +188,31 @@ export function WyreApp() {
     return () => {
       api.current = null;
       void llapi.disconnect();
-    }
+    };
   }, []);
 
   useEffect(() => {
     if (api.current && currencies) {
       submit();
     }
-  }, [currencies])
+  }, [currencies]);
 
   // const handleTokenChange = useCallback((event) => {
   //   updateToken(event.target.value || null);
   // }, [updateToken]);
 
   return (
-  <>
-    <Container>
-      <Panel>
-        <Logo>
+    <>
+      <Container>
+        <Panel>
+          <Logo>
             <Image src="/icons/wyre.svg" width={96} height={96} />
-        </Logo>
-        {/* <input type="text" value={deviceToken || ""} onChange={handleTokenChange} /> */}
+          </Logo>
+          {/* <input type="text" value={deviceToken || ""} onChange={handleTokenChange} /> */}
 
-        <SubmitButtom onClick={submit}>Select Account</SubmitButtom>
-      </Panel>
-    </Container>
-  </>);
+          <SubmitButtom onClick={submit}>Select Account</SubmitButtom>
+        </Panel>
+      </Container>
+    </>
+  );
 }
