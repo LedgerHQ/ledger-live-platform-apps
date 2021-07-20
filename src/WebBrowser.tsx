@@ -3,9 +3,9 @@ import styled from "styled-components";
 import CSSTransition from "react-transition-group/CSSTransition";
 
 import { Account } from "../lib/types";
-import LedgerLiveApi from '../lib/LedgerLiveApiSdk';
-import LedgerLiveApiMock from '../lib/LedgerLiveApiSdkMock';
-import WindowMessageTransport from '../lib/WindowMessageTransport';
+import LedgerLiveApi from "../lib/LedgerLiveApiSdk";
+import LedgerLiveApiMock from "../lib/LedgerLiveApiSdkMock";
+import WindowMessageTransport from "../lib/WindowMessageTransport";
 
 import AccountSelector from "./components/AccountSelector";
 import AccountRequest from "./components/AccountRequest";
@@ -18,7 +18,6 @@ const AppLoaderPageContainer = styled.div`
   flex-direction: column;
 `;
 
-
 const Overlay = styled.div`
   position: absolute;
   top: 0;
@@ -30,7 +29,7 @@ const Overlay = styled.div`
   align-items: center;
   justify-content: center;
   user-select: none;
-  
+
   &.overlay-enter {
     opacity: 1;
   }
@@ -67,187 +66,202 @@ const Iframe = styled.iframe`
 `;
 
 type WebBrowserProps = {
-    webUrl: string,
-    webAppName: string,
-    currencies: string[],
-    mock?: boolean,
-    initialAccountId: string | undefined,
-}
+  webUrl: string;
+  webAppName: string;
+  currencies: string[];
+  mock?: boolean;
+  initialAccountId: string | undefined;
+};
 
 type WebBrowserState = {
-    accounts: Account[],
-    selectedAccount: Account | undefined,
-    clientLoaded: boolean,
-    fetchingAccounts: boolean,
-    connected: boolean,
-}
+  accounts: Account[];
+  selectedAccount: Account | undefined;
+  clientLoaded: boolean;
+  fetchingAccounts: boolean;
+  connected: boolean;
+};
 
 const getInitialState = (): WebBrowserState => {
-    return {
-        accounts: [],
-        selectedAccount: undefined,
-        clientLoaded: false,
-        fetchingAccounts: false,
-        connected: false,
-    }
-}
+  return {
+    accounts: [],
+    selectedAccount: undefined,
+    clientLoaded: false,
+    fetchingAccounts: false,
+    connected: false,
+  };
+};
 
-export class WebBrowser extends React.Component<WebBrowserProps, WebBrowserState> {
-    ledgerAPI: LedgerLiveApi | LedgerLiveApiMock;
-    iframeRef = React.createRef<HTMLIFrameElement>();
+export class WebBrowser extends React.Component<
+  WebBrowserProps,
+  WebBrowserState
+> {
+  ledgerAPI: LedgerLiveApi | LedgerLiveApiMock;
+  iframeRef = React.createRef<HTMLIFrameElement>();
 
-    constructor(props: WebBrowserProps) {
-        super(props);
-        this.state = getInitialState();
+  constructor(props: WebBrowserProps) {
+    super(props);
+    this.state = getInitialState();
 
-        this.setClientLoaded = this.setClientLoaded.bind(this);
-        this.selectAccount = this.selectAccount.bind(this);
-        this.requestAccount = this.requestAccount.bind(this);
-        this.fetchAccounts = this.fetchAccounts.bind(this);
-        this.getUrl = this.getUrl.bind(this);
+    this.setClientLoaded = this.setClientLoaded.bind(this);
+    this.selectAccount = this.selectAccount.bind(this);
+    this.requestAccount = this.requestAccount.bind(this);
+    this.fetchAccounts = this.fetchAccounts.bind(this);
+    this.getUrl = this.getUrl.bind(this);
 
-        this.ledgerAPI = props.mock ? new LedgerLiveApiMock() : new LedgerLiveApi(new WindowMessageTransport());
-    }
+    this.ledgerAPI = props.mock
+      ? new LedgerLiveApiMock()
+      : new LedgerLiveApi(new WindowMessageTransport());
+  }
 
-    async fetchAccounts() {
-        this.setState({
-            fetchingAccounts: true,
-        });
-        const currencies = this.props.currencies || [];
-        const accounts = await this.ledgerAPI.listAccounts();
-        const filteredAccounts = currencies.length
-          ? accounts
-            .filter((account: Account) => currencies.indexOf(account.currency) > -1)
-          : accounts;
-
-        const initialAccount = this.props.initialAccountId ? accounts.find((account: Account) => account.id === this.props.initialAccountId) : undefined;
-        const storedAccountId: string | null = typeof window !== "undefined" ? localStorage.getItem("accountId") : null;
-        const storedAccount = storedAccountId !== null ? accounts.find((account: Account) => account.id === storedAccountId) : undefined;
-
-        const selectedAccount = filteredAccounts.length > 0 ? (
-            initialAccount || storedAccount || filteredAccounts[0]
-        ) : undefined
-
-        this.setState({
-            accounts: filteredAccounts,
-            fetchingAccounts: false,
-            selectedAccount,
-        });
-    }
-
-    async requestAccount() {
-        try {
-            const currencies = this.props.currencies;
-            const payload = currencies.length
-              ? {
-                currencies,
-              } 
-              : {};
-            const account = await this.ledgerAPI.requestAccount(payload);
-            this.selectAccount(account);
-        } catch (error) {
-            // TODO: handle error
-        }
-    }
-        
-    async componentDidMount() {
-        this.ledgerAPI.connect();
-
-        await this.fetchAccounts();
-
-        this.setState({
-            connected: true,
-        });
-    }
-
-    componentWillUnmount() {
-        this.setState({
-            connected: false,
-        });
-    }
-
-    selectAccount(account: Account | undefined) {
-        if (account) {
-            if (typeof window !== "undefined") {
-                localStorage.setItem("accountId", account.id);
-            }
-        }
-
-        this.setState({
-            selectedAccount: account,
-        });
-    }
-
-    setClientLoaded() {
-        this.setState({
-            clientLoaded: true,
-        });
-    }
-
-    getUrl() {
-      const { selectedAccount } = this.state;
-      const { webUrl } = this.props;
-
-      if (!selectedAccount) return "";
-
-      return webUrl.replace('{account.address}', selectedAccount.address);
-    }
-
-    render() {
-        const {
-            accounts,
-            clientLoaded,
-            fetchingAccounts,
-            connected,
-            selectedAccount,
-        } = this.state;
-
-        const {
-            webAppName
-        } = this.props;
-
-        const url = this.getUrl();
-
-        return (
-            <AppLoaderPageContainer>
-                {!!accounts.length &&
-                    <ControlBar desktop>
-                        <AccountSelector
-                            selectedAccount={selectedAccount}
-                            accounts={accounts}
-                            onAccountChange={this.selectAccount}
-                        />
-                    </ControlBar>
-                }
-                <Container>
-                    <CSSTransition in={clientLoaded} timeout={300} classNames="overlay">
-                        <Overlay>
-                            <Loader>
-                                {
-                                    !connected ? "Connecting ..." : fetchingAccounts ? "Loading accounts ..." : accounts.length === 0 ? "You don't have any accounts" : `Loading ${webAppName} ...`
-                                }
-                            </Loader>
-                        </Overlay>
-                    </CSSTransition>
-                    {
-                        connected && url ? (
-                            <Iframe
-                                ref={this.iframeRef}
-                                src={url}
-                                onLoad={this.setClientLoaded}
-                            />
-                        ) : null
-                    }
-                </Container>
-                {!!accounts.length &&
-                    <ControlBar mobile>
-                        <AccountRequest
-                            selectedAccount={selectedAccount}
-                            onRequestAccount={this.requestAccount}
-                        />
-                    </ControlBar>
-                }
-            </AppLoaderPageContainer>
+  async fetchAccounts() {
+    this.setState({
+      fetchingAccounts: true,
+    });
+    const currencies = this.props.currencies || [];
+    const accounts = await this.ledgerAPI.listAccounts();
+    const filteredAccounts = currencies.length
+      ? accounts.filter(
+          (account: Account) => currencies.indexOf(account.currency) > -1
         )
+      : accounts;
+
+    const initialAccount = this.props.initialAccountId
+      ? accounts.find(
+          (account: Account) => account.id === this.props.initialAccountId
+        )
+      : undefined;
+    const storedAccountId: string | null =
+      typeof window !== "undefined" ? localStorage.getItem("accountId") : null;
+    const storedAccount =
+      storedAccountId !== null
+        ? accounts.find((account: Account) => account.id === storedAccountId)
+        : undefined;
+
+    const selectedAccount =
+      filteredAccounts.length > 0
+        ? initialAccount || storedAccount || filteredAccounts[0]
+        : undefined;
+
+    this.setState({
+      accounts: filteredAccounts,
+      fetchingAccounts: false,
+      selectedAccount,
+    });
+  }
+
+  async requestAccount() {
+    try {
+      const currencies = this.props.currencies;
+      const payload = currencies.length
+        ? {
+            currencies,
+          }
+        : {};
+      const account = await this.ledgerAPI.requestAccount(payload);
+      this.selectAccount(account);
+    } catch (error) {
+      // TODO: handle error
     }
+  }
+
+  async componentDidMount() {
+    this.ledgerAPI.connect();
+
+    await this.fetchAccounts();
+
+    this.setState({
+      connected: true,
+    });
+  }
+
+  componentWillUnmount() {
+    this.setState({
+      connected: false,
+    });
+  }
+
+  selectAccount(account: Account | undefined) {
+    if (account) {
+      if (typeof window !== "undefined") {
+        localStorage.setItem("accountId", account.id);
+      }
+    }
+
+    this.setState({
+      selectedAccount: account,
+    });
+  }
+
+  setClientLoaded() {
+    this.setState({
+      clientLoaded: true,
+    });
+  }
+
+  getUrl() {
+    const { selectedAccount } = this.state;
+    const { webUrl } = this.props;
+
+    if (!selectedAccount) return "";
+
+    return webUrl.replace("{account.address}", selectedAccount.address);
+  }
+
+  render() {
+    const {
+      accounts,
+      clientLoaded,
+      fetchingAccounts,
+      connected,
+      selectedAccount,
+    } = this.state;
+
+    const { webAppName } = this.props;
+
+    const url = this.getUrl();
+
+    return (
+      <AppLoaderPageContainer>
+        {!!accounts.length && (
+          <ControlBar desktop>
+            <AccountSelector
+              selectedAccount={selectedAccount}
+              accounts={accounts}
+              onAccountChange={this.selectAccount}
+            />
+          </ControlBar>
+        )}
+        <Container>
+          <CSSTransition in={clientLoaded} timeout={300} classNames="overlay">
+            <Overlay>
+              <Loader>
+                {!connected
+                  ? "Connecting ..."
+                  : fetchingAccounts
+                  ? "Loading accounts ..."
+                  : accounts.length === 0
+                  ? "You don't have any accounts"
+                  : `Loading ${webAppName} ...`}
+              </Loader>
+            </Overlay>
+          </CSSTransition>
+          {connected && url ? (
+            <Iframe
+              ref={this.iframeRef}
+              src={url}
+              onLoad={this.setClientLoaded}
+            />
+          ) : null}
+        </Container>
+        {!!accounts.length && (
+          <ControlBar mobile>
+            <AccountRequest
+              selectedAccount={selectedAccount}
+              onRequestAccount={this.requestAccount}
+            />
+          </ControlBar>
+        )}
+      </AppLoaderPageContainer>
+    );
+  }
 }

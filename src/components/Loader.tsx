@@ -9,6 +9,6 @@ const loadingKeyframes = keyframes`
 const Loader = styled.div`
   animation: ${loadingKeyframes} 1s ease-in-out infinite;
   font-weight: bold;
-`
+`;
 
 export default Loader;
