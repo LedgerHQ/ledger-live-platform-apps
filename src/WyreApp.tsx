@@ -8,9 +8,9 @@ import React, {
 import styled from "styled-components";
 import Image from "next/image";
 
-import LedgerLiveApi from "../lib/LedgerLiveApiSdk";
-import WindowMessageTransport from "../lib/WindowMessageTransport";
-import { Account, Currency } from "../lib/types";
+import LedgerLiveApi from "ledger-live-platform-sdk";
+import WindowMessageTransport from "ledger-live-platform-sdk/dist/transports/windowMessageTransport";
+import type { Account, Currency } from "ledger-live-platform-sdk/dist/types";
 
 import Button from "./components/Button";
 

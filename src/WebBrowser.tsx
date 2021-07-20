@@ -2,10 +2,10 @@ import React from "react";
 import styled, { keyframes } from "styled-components";
 import CSSTransition from "react-transition-group/CSSTransition";
 
-import { Account } from "../lib/types";
-import LedgerLiveApi from "../lib/LedgerLiveApiSdk";
-import LedgerLiveApiMock from "../lib/LedgerLiveApiSdkMock";
-import WindowMessageTransport from "../lib/WindowMessageTransport";
+import type { Account } from "ledger-live-platform-sdk/dist/types";
+import LedgerLiveApi from "ledger-live-platform-sdk";
+import LedgerLiveApiMock from "ledger-live-platform-sdk/dist/mock/LedgerLiveApiSdkMock";
+import WindowMessageTransport from "ledger-live-platform-sdk/dist/transports/windowMessageTransport";
 
 import AccountSelector from "./components/AccountSelector";
 import AccountRequest from "./components/AccountRequest";
