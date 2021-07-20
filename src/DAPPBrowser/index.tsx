@@ -85,6 +85,7 @@ const DappIframe = styled.iframe`
 type DAPPBrowserProps = {
   dappUrl: string;
   dappName: string;
+  theme?: string;
   nanoApp?: string;
   mock?: boolean;
   initialAccountId: string | undefined;

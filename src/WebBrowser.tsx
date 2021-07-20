@@ -1,5 +1,5 @@
 import React from "react";
-import styled, { keyframes } from "styled-components";
+import styled from "styled-components";
 import CSSTransition from "react-transition-group/CSSTransition";
 
 import type { Account } from "ledger-live-platform-sdk";
@@ -11,21 +11,12 @@ import LedgerLiveApi, {
 import AccountSelector from "./components/AccountSelector";
 import AccountRequest from "./components/AccountRequest";
 import ControlBar from "./components/ControlBar";
-
-const loading = keyframes`
-  0% { opacity:0.8; }
-  50% { opacity:0.4; }
-  100% { opacity:0.8; }
-`;
+import Loader from "./components/Loader";
 
 const AppLoaderPageContainer = styled.div`
   height: 100%;
   display: flex;
   flex-direction: column;
-`;
-
-const Loader = styled.div`
-  animation: ${loading} 1s ease-in-out infinite;
 `;
 
 const Overlay = styled.div`
