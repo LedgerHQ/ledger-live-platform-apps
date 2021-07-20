@@ -3,11 +3,11 @@ import styled, { css, DefaultTheme } from "styled-components";
 import Select from "react-select";
 
 import LedgerLiveApi from "ledger-live-platform-sdk";
-import WindowMessageTransport from "ledger-live-platform-sdk/dist/transports/windowMessageTransport";
 import {
+  WindowMessageTransport,
   deserializeTransaction,
   deserializeSignedTransaction,
-} from "ledger-live-platform-sdk/dist/serializers";
+} from "ledger-live-platform-sdk";
 
 const AppLoaderPageContainer = styled.div`
   display: flex;

@@ -2,7 +2,7 @@ import React from "react";
 import styled from "styled-components";
 import Image from "next/image";
 
-import type { Account } from "ledger-live-platform-sdk/dist/types";
+import type { Account } from "ledger-live-platform-sdk";
 import Button from "../components/Button";
 
 const Row = styled.div`

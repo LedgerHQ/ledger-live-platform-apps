@@ -1,8 +1,8 @@
 import { BigNumber } from "bignumber.js";
 import eip55 from "eip55";
 
-import type { EthereumTransaction } from "ledger-live-platform-sdk/dist/families/ethereum/types";
-import FAMILIES from "ledger-live-platform-sdk/dist/families/types";
+import type { EthereumTransaction } from "ledger-live-platform-sdk";
+import { FAMILIES } from "ledger-live-platform-sdk";
 
 export function convertEthToLiveTX(ethTX: any): EthereumTransaction {
   return {

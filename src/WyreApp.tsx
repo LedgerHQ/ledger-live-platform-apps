@@ -9,8 +9,8 @@ import styled from "styled-components";
 import Image from "next/image";
 
 import LedgerLiveApi from "ledger-live-platform-sdk";
-import WindowMessageTransport from "ledger-live-platform-sdk/dist/transports/windowMessageTransport";
-import type { Account, Currency } from "ledger-live-platform-sdk/dist/types";
+import { WindowMessageTransport } from "ledger-live-platform-sdk";
+import type { Account, Currency } from "ledger-live-platform-sdk";
 
 import Button from "./components/Button";
 

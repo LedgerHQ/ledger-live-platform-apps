@@ -4,7 +4,7 @@ import Image from "next/image";
 import styled, { useTheme, DefaultTheme } from "styled-components";
 import Color from "color";
 
-import type { Account } from "ledger-live-platform-sdk/dist/types";
+import type { Account } from "ledger-live-platform-sdk";
 
 const IconContainer = styled.div`
   margin-right: 0.4em;
