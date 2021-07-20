@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "tslint": "tslint -c tslint.json 'src/**/*.ts' 'pages/**/*.ts'"
+    "format:check": "prettier --check 'src/**' 'pages/**'",
+    "format:fix": "prettier --write 'src/**' 'pages/**'",
+    "lint:check": "eslint --cache src/** pages/**",
+    "lint:fix": "eslint --cache --fix src/** pages/**"
   },
   "dependencies": {
     "axios": "^0.21.1",
@@ -31,7 +34,13 @@
     "@types/react-select": "^4.0.14",
     "@types/react-transition-group": "^4.4.1",
     "@types/styled-components": "^5.1.9",
+    "@typescript-eslint/eslint-plugin": "^4.28.4",
+    "@typescript-eslint/parser": "^4.28.4",
     "babel-plugin-styled-components": "^1.12.0",
+    "eslint": "^7.31.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^3.4.0",
+    "prettier": "^2.3.2",
     "tslint": "^6.1.3",
     "typescript": "^4.2.3"
   }
