@@ -16,7 +16,7 @@ type SmartWebsocketOptions = {
   reconnect?: boolean;
   reconnectMaxAttempts?: number;
   reconnectDelay?: number;
-  logger?: Function;
+  logger?: (message: string, ...args: any) => void;
 };
 
 export class SmartWebsocket extends EventEmitter {
@@ -27,7 +27,7 @@ export class SmartWebsocket extends EventEmitter {
   private reconnect: boolean;
   private reconnectMaxAttempts: number;
   private reconnectDelay: number;
-  public logger: Function;
+  public logger: (message: string, ...args: any) => void;
 
   constructor(url: string, options?: SmartWebsocketOptions) {
     super();

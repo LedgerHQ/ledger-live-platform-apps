@@ -155,7 +155,7 @@ const LoaderContainer = styled.div`
   }
 `;
 
-function useDeviceToken(): [string | null, Function] {
+function useDeviceToken(): [string | null, (token: any) => void] {
   const [deviceToken, setDeviceToken] = useState(
     window.localStorage.getItem("DEVICE_TOKEN")
   );
@@ -213,7 +213,7 @@ const getWyre = (
     },
   });
 
-  wyreInstance.on("close", (error: Error | {} | null) => {
+  wyreInstance.on("close", (error: Error | Record<string, unknown> | null) => {
     // When closing, it returns an empty object.
     if (error !== null && Object.keys(error).length) {
       console.error("error!", error);
@@ -284,7 +284,7 @@ export function WyreApp() {
   }, []);
 
   // const handleTokenChange = useCallback((event) => {
-  //   updateToken(event.target.value || null);
+  //   updateToken(event.target.value || null);
   // }, [updateToken]);
 
   return (
