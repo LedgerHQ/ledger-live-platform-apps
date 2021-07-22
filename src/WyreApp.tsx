@@ -279,7 +279,7 @@ export function WyreApp() {
 
     return () => {
       api.current = null;
-      void llapi.disconnect();
+      llapi.disconnect();
     };
   }, []);
 

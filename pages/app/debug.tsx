@@ -111,7 +111,7 @@ export default function DebugApp() {
     llapi.connect();
     return () => {
       api.current = null;
-      void llapi.disconnect();
+      llapi.disconnect();
     };
   }, []);
 
