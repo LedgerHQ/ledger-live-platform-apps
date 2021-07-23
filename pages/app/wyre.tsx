@@ -1,24 +1,24 @@
 import React, { useEffect, useState } from "react";
-import Head from 'next/head';
+import Head from "next/head";
 
 import { WyreApp } from "../../src/WyreApp";
 
-
 function DappBrowserPage() {
-    const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-    useEffect(() => {
-        setMounted(true);
-        return () => setMounted(false);
-    }, []);
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
 
-    return (<>
+  return (
+    <>
       <Head>
         <script src="https://verify.sendwyre.com/js/verify-module-init.js"></script>
       </Head>
-      {mounted && 
-        <WyreApp />}
-    </>);
+      {mounted && <WyreApp />}
+    </>
+  );
 }
 
 export default DappBrowserPage;
