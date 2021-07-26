@@ -59,15 +59,3 @@ export type SignedTransaction = {
     signatureRaw?: Object,
     expirationDate: Date | null,
 }
-
-export enum FeesLevel {
-    Low = 'low',
-    Standard = 'standard',
-    High = 'high'
-}
-
-export type EstimatedFees = {
-    low: number;
-    standard: number;
-    high: number; 
-}

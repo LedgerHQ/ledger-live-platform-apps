@@ -6,11 +6,10 @@ import {
     SignTransactionParams,
     Transport,
     ExchangeType,
-    ExchangePayload,
-    EstimatedFees,
-    FeesLevel,
+    TransactionExchangePayload,
+    SellExchangePayload,
     EcdsaSignature,
-    DeviceDetails,
+    DeviceInfo,
     ApplicationDetails
 } from './LedgerLiveApiSdk.types';
 import {
@@ -26,9 +25,7 @@ import {
     serializeSignedTransaction,
 } from "./serializers";
 import Logger from './logger';
-import {
-    DeviceBridge
-} from './DeviceBridge'
+import LedgerPlatformApduTransport from './LedgerPlatformApduTransport'
 
 const defaultLogger = new Logger('LL-API');
 
@@ -92,7 +89,7 @@ export default class LedgerLiveApi {
      * Let user choose an account in a Ledger Live, providing filters for choosing currency or allowing add account.
      * 
      * @param {RequestAccountParams} params - parameters for the request modal
-     * @returns Account
+     * @returns {Promise<Account>} The account picked by the user
      */
     async requestAccount(params: RequestAccountParams): Promise<Account> {
         const rawAccount = await this._request('account.request', params || {});
@@ -103,7 +100,7 @@ export default class LedgerLiveApi {
     /**
      * List accounts added by user on Ledger Live
      * 
-     * @returns {Account[]}
+     * @returns {Account[]} The list of accounts
      */
     async listAccounts(): Promise<Account[]> {
         const rawAccounts = await this._request('account.list');
@@ -115,7 +112,7 @@ export default class LedgerLiveApi {
      * List crypto-currencies supported by Ledger Live, providing filters by name or ticker
      * 
      * @param {ListCurrenciesParams} params - filters for currencies
-     * @returns {Currency[]}
+     * @returns {Currency[]} A list of currencies matching the params
      */
     async listCurrencies(params?: ListCurrenciesParams): Promise<Currency[]> {
         return this._request('currency.list', params || {});
@@ -164,21 +161,8 @@ export default class LedgerLiveApi {
     }
 
     /**
-     * Estimate fees required to successfully broadcast a transaction.
-     * @param {string} accountId - LL id of the account
-     * @param {Transaction} transaction - the transaction to estimate
-     * 
-     * @returns {EstimatedFees} - Estimated fees for 3 level of confirmation speed
-     */
-    async estimateTransactionFees(accountId: string, transaction: Transaction): Promise<EstimatedFees> {
-        accountId;
-        transaction;
-        throw new Error('Function is not implemented yet');
-    }
-
-    /**
      * Synchronize an account with its network and return an updated view of the account
-     * @param {string} accountId The id of the account to synchronize
+     * @param {string} accountId - The id of the account to synchronize
      * 
      * @returns {Account} An updated view of the account 
      */
@@ -189,8 +173,8 @@ export default class LedgerLiveApi {
 
     /**
      * Start the exchange process by generating a nonce on Ledger device
-     * @param {ExchangeType} exchangeType 
-     * @param {string} partnerName 
+     * @param {ExchangeType} exchangeType The type of exchange to initiate
+     * @param {string} partnerName Name of the partner used to retrieve partner informations.
      * 
      * @returns {string} The nonce of the exchange
      */
@@ -201,29 +185,29 @@ export default class LedgerLiveApi {
     }
 
     /**
-     * Complete an exchange process by passing by the exchange content and its signature.
-     * @param {ExchangePayload} exchangePayload
-     * @param {EcdsaSignature} payloadSignature  
-     * @param {FeesLevel} txFeesLevel 
+     * Complete an exchange process by passing by the exchange content and its signature. Ledger Live will treat and forward
+     * exchange payload to the device and sign an broadcast the transaction once accepted by user.
+     * @param {TransactionExchangePayload | SellExchangePayload} exchangePayload The payload of the exchange operations with details of the transaction to create.
+     * @param {EcdsaSignature} payloadSignature Signature of the payload signed by the provider
      */
-    async completeExchange(exchangePayload: ExchangePayload, payloadSignature: EcdsaSignature, txFeesLevel: FeesLevel): Promise<void> {
+    async completeExchange(exchangePayload: TransactionExchangePayload | SellExchangePayload, payloadSignature: EcdsaSignature): Promise<string> {
         exchangePayload;
         payloadSignature;
-        txFeesLevel;
         throw new Error('Function is not implemented yet');
     }
 
     /**
-     * Get information about a currently connected device (firmware version...)
+     * Get information about a currently connected device (firmware version...) TODO recup du cache en ouvrant le manager
      * 
-     * @returns {Promise<DeviceDetails>} Informations about a currently connected device
+     * @returns {Promise<DeviceInfo>} Informations about a currently connected device
      */
-    async getDeviceInfo(): Promise<DeviceDetails> {
+    async getLastConnectedDeviceInfo(): Promise<DeviceInfo> {
         throw new Error('Function is not implemented yet');
     }
 
     /**
-     * List applications opened on a currently connected device
+     * List applications installed on the last connected device. Application list is cached by Ledger Live
+     * when the user open the manager.
      * 
      * @returns {Promise<ApplicationDetails[]>} The list of applications
      */
@@ -232,26 +216,24 @@ export default class LedgerLiveApi {
     }
 
     /**
-     * Open a bridge to an application to exchange APDUs with a device application
-     * @param {string} appName The name of the application to bridge
-     * @param {<Result>(DeviceBridge) => Promise<Result>} handler A function using the bridge to send command to a device
+     * Open a bridge to an application to exchange APDUs with a device application.
+     * @param {string} appName - The name of the application to bridge
      * 
-     * @returns {Promise<Result>} The result of the handler function
+     * @returns {Promise<LedgerPlatformApduTransport>} A APDU transport which can be used either to send raw APDU
+     * or used with ledgerjs libraries.
      */
-    async bridgeApp<Result>(appName: string, handler: <Result>(deviceBridge: DeviceBridge) => Promise<Result>): Promise<Result> {
+    async bridgeApp(appName: string): Promise<LedgerPlatformApduTransport> {
         appName;
-        handler;
         throw new Error('Function is not implemented yet');
     }
 
     /**
      * Open a bridge to a the device dashboard to exchange APDUs
-     * @param {<Result>(DeviceBridge) => Promise<Result>} handler A function using the bridge to send command to a device
      * 
-     * @returns {Promise<Result>} The result of the handler function
+     * @returns {Promise<LedgerPlatformApduTransport>} A APDU transport which can be used either to send raw APDU
+     * or used with ledgerjs libraries.
      */
-    async bridgeDashboard<Result>(handler: <Result>(deviceBridge: DeviceBridge) => Promise<Result>): Promise<Result> {
-        handler;
+    async bridgeDashboard(): Promise<LedgerPlatformApduTransport> {
         throw new Error('Function is not implemented yet');
     }
 
