@@ -16,18 +16,18 @@ type SmartWebsocketOptions = {
   reconnect?: boolean;
   reconnectMaxAttempts?: number;
   reconnectDelay?: number;
-  logger?: Function;
+  logger?: (message: string, ...args: any) => void;
 };
 
 export class SmartWebsocket extends EventEmitter {
   private ws: WebSocket | null = null;
   private url: string;
-  private reconnectAttempts: number = 0;
+  private reconnectAttempts = 0;
   private _connected: false | Promise<WebSocket> = false;
   private reconnect: boolean;
   private reconnectMaxAttempts: number;
   private reconnectDelay: number;
-  public logger: Function;
+  public logger: (message: string, ...args: any) => void;
 
   constructor(url: string, options?: SmartWebsocketOptions) {
     super();

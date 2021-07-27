@@ -155,7 +155,7 @@ const LoaderContainer = styled.div`
   }
 `;
 
-function useDeviceToken(): [string | null, Function] {
+function useDeviceToken(): [string | null, (token: any) => void] {
   const [deviceToken, setDeviceToken] = useState(
     window.localStorage.getItem("DEVICE_TOKEN")
   );
@@ -168,7 +168,7 @@ function useDeviceToken(): [string | null, Function] {
 
   useEffect(() => {
     if (!deviceToken) {
-      let array = new Uint8Array(25);
+      const array = new Uint8Array(25);
       window.crypto.getRandomValues(array);
       const token = Array.prototype.map
         .call(array, (x) => ("00" + x.toString(16)).slice(-2))
@@ -213,7 +213,7 @@ const getWyre = (
     },
   });
 
-  wyreInstance.on("close", (error: Error | {} | null) => {
+  wyreInstance.on("close", (error: Error | Record<string, unknown> | null) => {
     // When closing, it returns an empty object.
     if (error !== null && Object.keys(error).length) {
       console.error("error!", error);
@@ -279,12 +279,12 @@ export function WyreApp() {
 
     return () => {
       api.current = null;
-      llapi.disconnect();
+      void llapi.disconnect();
     };
   }, []);
 
   // const handleTokenChange = useCallback((event) => {
-  //   updateToken(event.target.value || null);
+  //   updateToken(event.target.value || null);
   // }, [updateToken]);
 
   return (

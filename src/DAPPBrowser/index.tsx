@@ -414,8 +414,14 @@ export class DAPPBrowser extends React.Component<
     const {
       dappUrl,
       dappName,
+      theme,
       // chainConfigs,
     } = this.props;
+
+    const url = new URL(dappUrl);
+    if (theme) {
+      url.searchParams.set("theme", theme);
+    }
 
     return (
       <AppLoaderPageContainer>
@@ -454,7 +460,7 @@ export class DAPPBrowser extends React.Component<
           {connected && accounts.length > 0 ? (
             <DappIframe
               ref={this.iframeRef}
-              src={dappUrl}
+              src={url.toString()}
               onLoad={this.setClientLoaded}
             />
           ) : null}

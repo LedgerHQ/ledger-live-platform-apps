@@ -45,7 +45,7 @@ function DappBrowserPage() {
   );
 
   if (mounted) {
-    return !!dappUrl ? (
+    return dappUrl ? (
       <DAPPBrowser
         dappName={dappName}
         dappUrl={dappUrl}

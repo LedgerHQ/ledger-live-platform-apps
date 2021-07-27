@@ -19,7 +19,7 @@ function WebBrowserPage() {
   }, []);
 
   if (mounted) {
-    return !!webUrl ? (
+    return webUrl ? (
       <WebBrowser
         webAppName={webAppName}
         webUrl={webUrl}

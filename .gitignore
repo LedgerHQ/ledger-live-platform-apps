@@ -2,6 +2,7 @@
 
 .yalc
 yalc.lock
+.eslintcache
 
 # dependencies
 /node_modules

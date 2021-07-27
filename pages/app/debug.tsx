@@ -111,7 +111,7 @@ export default function DebugApp() {
     llapi.connect();
     return () => {
       api.current = null;
-      llapi.disconnect();
+      void llapi.disconnect();
     };
   }, []);
 
@@ -224,7 +224,9 @@ export default function DebugApp() {
       try {
         const payload = JSON.parse(event.target.value);
         setRawPayload(prettyJSON(payload));
-      } catch (err) {}
+      } catch (err) {
+        // FIXME: do something with error?
+      }
     },
     [setRawPayload]
   );
