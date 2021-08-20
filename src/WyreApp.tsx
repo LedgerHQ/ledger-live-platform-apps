@@ -9,9 +9,9 @@ import CSSTransition from "react-transition-group/CSSTransition";
 import styled, { useTheme } from "styled-components";
 import Image from "next/image";
 
-import LedgerLiveApi from "ledger-live-platform-sdk";
-import { WindowMessageTransport } from "ledger-live-platform-sdk";
-import type { Account, Currency } from "ledger-live-platform-sdk";
+import LedgerLiveApi from "@ledgerhq/live-app-sdk";
+import { WindowMessageTransport } from "@ledgerhq/live-app-sdk";
+import type { Account, Currency } from "@ledgerhq/live-app-sdk";
 
 import Button from "./components/Button";
 import Loader from "./components/Loader";

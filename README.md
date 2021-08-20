@@ -1,25 +1,5 @@
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
-## Working with `ledger-live-platform-sdk`
-
-[`ledger-live-platform-sdk`](https://github.com/LedgerHQ/ledger-live-platform-sdk) is still in development for now and not available on npm. Here is a setup process using [Yalc](https://github.com/wclr/yalc):
-
-- First, clone the [`ledger-live-platform-sdk`](https://github.com/LedgerHQ/ledger-live-platform-sdk).
-
-- Setup the [`ledger-live-platform-sdk`](https://github.com/LedgerHQ/ledger-live-platform-sdk) using the README provided in the project repo, then build and publish it locally using:
-
-```bash
-yalc publish
-```
-
-- In this `ledger-live-platform-apps` repo, install the packages and link the `ledger-live-platform-sdk` dependency using:
-
-```bash
-yarn && yalc link ledger-live-platform-sdk
-```
-
-You should then be good to go. Alternativelly or if you experience an issue with the linking process, you can use [`yalc add`](https://github.com/wclr/yalc#add) instead of [`yalc link`](https://github.com/wclr/yalc#link).
-
 ## Getting Started
 
 First, run the development server:

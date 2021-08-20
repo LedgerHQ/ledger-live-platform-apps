@@ -3,11 +3,11 @@ import styled, { keyframes } from "styled-components";
 import { JSONRPCRequest, JSONRPCResponse } from "json-rpc-2.0";
 import CSSTransition from "react-transition-group/CSSTransition";
 
-import type { Account } from "ledger-live-platform-sdk";
+import type { Account } from "@ledgerhq/live-app-sdk";
 import LedgerLiveApi, {
   Mock as LedgerLiveApiMock,
   WindowMessageTransport,
-} from "ledger-live-platform-sdk";
+} from "@ledgerhq/live-app-sdk";
 
 import AccountSelector from "../components/AccountSelector";
 import AccountRequest from "../components/AccountRequest";

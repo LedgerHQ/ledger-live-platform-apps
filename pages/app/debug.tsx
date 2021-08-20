@@ -2,12 +2,12 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import styled, { css, DefaultTheme } from "styled-components";
 import Select from "react-select";
 
-import LedgerLiveApi from "ledger-live-platform-sdk";
+import LedgerLiveApi from "@ledgerhq/live-app-sdk";
 import {
   WindowMessageTransport,
   deserializeTransaction,
   deserializeSignedTransaction,
-} from "ledger-live-platform-sdk";
+} from "@ledgerhq/live-app-sdk";
 
 const AppLoaderPageContainer = styled.div`
   display: flex;
