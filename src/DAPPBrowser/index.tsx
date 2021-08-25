@@ -3,10 +3,11 @@ import styled, { keyframes } from "styled-components";
 import { JSONRPCRequest, JSONRPCResponse } from "json-rpc-2.0";
 import CSSTransition from "react-transition-group/CSSTransition";
 
-import { Account } from "../../lib/types";
-import LedgerLiveApi from "../../lib/LedgerLiveApiSdk";
-import LedgerLiveApiMock from "../../lib/LedgerLiveApiSdkMock";
-import WindowMessageTransport from "../../lib/WindowMessageTransport";
+import type { Account } from "@ledgerhq/live-app-sdk";
+import LedgerLiveApi, {
+  Mock as LedgerLiveApiMock,
+  WindowMessageTransport,
+} from "@ledgerhq/live-app-sdk";
 
 import AccountSelector from "../components/AccountSelector";
 import AccountRequest from "../components/AccountRequest";

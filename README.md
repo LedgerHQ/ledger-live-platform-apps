@@ -18,6 +18,22 @@ You can start editing the page by modifying `pages/index.js`. The page auto-upda
 
 The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
 
+## How to test?
+
+After running the development server, you can test locally the `dapp-browser` and `web-browser` related applications by providing a `mock=true` query argument to the corresponding URL.
+
+Example:
+
+- Paraswap:
+
+  `http://localhost:3000/app/dapp-browser?url=https%3A%2F%2Fparaswap.io%2F%3Fembed%3Dtrue%26referrer%3Dledger2&nanoApp=Paraswap&dappName=ParaSwap&mock=true`
+
+- Rainbow.me:
+
+  `http://localhost:3000/app/web-browser?url=https%3A%2F%2Frainbow.me%2F%7Baccount.address%7D&currencies=ethereum&webAppName=Rainbow.me&mock=true`
+
+You can also test in the Ledger Live desktop environment (without mock) by uploading your own manifest referencing your local development server URL. Please refer to the [developer mode doc](https://developers.ledger.com/docs/platform-app/developer-mode/) for related information.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

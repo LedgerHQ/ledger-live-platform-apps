@@ -1,4 +1,3 @@
-
 export type ThemeType = typeof defaultTheme; // This is the type definition for my theme object.
 
 export const defaultTheme = {
@@ -9,10 +8,10 @@ export const defaultTheme = {
     contrast: "#ffffff",
     alert: "#ea2e49",
     warning: "#ff7701",
-  }
-}
+  },
+};
 
-declare module 'styled-components' {
+declare module "styled-components" {
   interface DefaultTheme extends ThemeType {}
 }
 

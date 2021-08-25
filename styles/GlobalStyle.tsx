@@ -5,8 +5,8 @@ import { createGlobalStyle } from "styled-components";
 export const GlobalStyle = createGlobalStyle`
   html,
   body {
-    background-color: ${p => p.theme.colors.background};
-    color: ${p => p.theme.colors.text};
+    background-color: ${(p) => p.theme.colors.background};
+    color: ${(p) => p.theme.colors.text};
     padding: 0;
     margin: 0;
     font-family: Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
