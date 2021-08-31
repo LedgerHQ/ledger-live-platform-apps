@@ -30,9 +30,9 @@ const AccountAddress = styled.span`
   opacity: 0.5;
 `;
 
-const AccountIcon = () => (
+const AccountIcon = ({ currencyId }: { currencyId: string }) => (
   <IconContainer>
-    <Image src="/icons/ethereum.svg" width={24} height={24} />
+    <Image src={`/icons/${currencyId}.svg`} width={24} height={24} />
   </IconContainer>
 );
 
@@ -42,20 +42,21 @@ const AccountOption: typeof components.Option = ({
   ...rest
 }) => (
   <components.Option data={data} {...rest}>
-    <AccountIcon />
+    <AccountIcon currencyId={data.data.currency} />
     <AccountDetails>
       <AccountName>{children}</AccountName>
-      <AccountAddress>{data.value}</AccountAddress>
+      <AccountAddress>{data.data.address}</AccountAddress>
     </AccountDetails>
   </components.Option>
 );
 
 const AccountSummary: typeof components.SingleValue = ({
   children,
+  data,
   ...rest
 }) => (
-  <components.SingleValue {...rest}>
-    <AccountIcon />
+  <components.SingleValue {...rest} data={data}>
+    <AccountIcon currencyId={data.data.currency} />
     <AccountName>{children}</AccountName>
   </components.SingleValue>
 );
@@ -109,9 +110,11 @@ type AccountSelectorProps = {
 function fromAccountToOption(account: Account): OptionTypeBase {
   return {
     label: account.name,
-    value: account.address,
+    value: `${account.id}`,
     data: {
+      address: account.address,
       balance: account.balance,
+      currency: account.currency,
     },
   };
 }
@@ -136,7 +139,7 @@ function AccountSelector({
   const handleOnChange = useCallback(
     (option: OptionTypeBase | null) => {
       const newSelectedAccount = option
-        ? accounts.find((account) => account.address === option.value)
+        ? accounts.find((account) => account.id === option.value)
         : undefined;
       onAccountChange(newSelectedAccount);
     },

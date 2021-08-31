@@ -28,17 +28,10 @@ function DappBrowserPage() {
     () => [
       { name: "Ethereum", currency: "ethereum", chainID: 1, nodeURL },
       {
-        name: "Ropsten",
-        currency: "ethereum",
-        chainID: 3,
-        nodeURL:
-          "wss://ropsten.infura.io/ws/v3/a1664f14bbf54437acd24a79a600e3cc",
-      },
-      {
-        name: "Polygon",
-        currency: "ethereum",
-        chainID: 137,
-        nodeURL: "wss://rpc-mainnet.maticvigil.com/ws",
+        name: "Binance Smart Chain",
+        currency: "bsc",
+        chainID: 56,
+        nodeURL: "wss://bsc-ws-node.nariox.org:443",
       },
     ],
     [nodeURL]

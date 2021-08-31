@@ -53,7 +53,7 @@ export class SmartWebsocket extends EventEmitter {
       );
     } else {
       this.emit("connecting");
-      this.logger("connecting");
+      this.logger(`connecting to ${this.url}`);
     }
 
     this._connected = new Promise((resolve, reject) => {

@@ -199,7 +199,6 @@ export class DAPPBrowser extends React.Component<
         case "eth_sendTransaction": {
           const ethTX = data.params[0];
           const tx = convertEthToLiveTX(ethTX);
-          console.log("CONVERTED TX: ", tx);
           const fromAccount = this.state.accounts.find(
             (account) =>
               account.address.toLowerCase() === ethTX.from.toLowerCase()
@@ -249,18 +248,18 @@ export class DAPPBrowser extends React.Component<
   }
 
   async fetchAccounts() {
-    const { selectedChainConfig } = this.state;
+    const { chainConfigs } = this.props;
 
-    if (!selectedChainConfig) {
-      throw new Error("No chain config selected");
-    }
+    const enabledCurrencies = chainConfigs.map(
+      (chainConfig) => chainConfig.currency
+    );
 
     this.setState({
       fetchingAccounts: true,
     });
     const accounts = await this.ledgerAPI.listAccounts();
-    const filteredAccounts = accounts.filter(
-      (account: Account) => account.currency === selectedChainConfig.currency
+    const filteredAccounts = accounts.filter((account: Account) =>
+      enabledCurrencies.includes(account.currency)
     );
 
     const initialAccount = this.props.initialAccountId
@@ -278,10 +277,23 @@ export class DAPPBrowser extends React.Component<
         ? initialAccount || storedAccount || filteredAccounts[0]
         : undefined;
 
+    const selectedChainConfig = selectedAccount
+      ? chainConfigs.find(
+          (chainConfig) => chainConfig.currency === selectedAccount.currency
+        )
+      : undefined;
+
+    if (!selectedChainConfig) {
+      throw new Error("No chain config selected");
+    }
+
+    await this.initChainConfig(selectedChainConfig);
+
     this.setState({
       accounts: filteredAccounts,
       fetchingAccounts: false,
       selectedAccount,
+      selectedChainConfig,
     });
   }
 
@@ -319,7 +331,6 @@ export class DAPPBrowser extends React.Component<
     });
 
     this.websocket.connect();
-    await this.fetchAccounts();
   }
 
   async componentDidMount() {
@@ -329,10 +340,10 @@ export class DAPPBrowser extends React.Component<
       throw new Error("No chain config selected");
     }
 
+    console.log({ selectedChainConfig });
     this.ledgerAPI.connect();
     window.addEventListener("message", this.receiveDAPPMessage, false);
-
-    await this.initChainConfig(selectedChainConfig);
+    await this.fetchAccounts();
 
     this.setState({
       connected: true,
@@ -351,6 +362,7 @@ export class DAPPBrowser extends React.Component<
 
   selectAccount(account: Account | undefined) {
     const { selectedChainConfig } = this.state;
+    const { chainConfigs } = this.props;
 
     if (!selectedChainConfig) {
       throw new Error("No chain config selected");
@@ -366,6 +378,13 @@ export class DAPPBrowser extends React.Component<
         method: "accountsChanged",
         params: [[account.address]],
       });
+    }
+
+    if (account) {
+      const chainConfig = chainConfigs.find(
+        (chainConfig) => chainConfig.currency === account.currency
+      );
+      this.selectChainConfig(chainConfig);
     }
 
     this.setState({
@@ -385,7 +404,7 @@ export class DAPPBrowser extends React.Component<
       this.sendMessageToDAPP({
         jsonrpc: "2.0",
         method: "chainChanged",
-        params: [[`0x${chainConfig.chainID.toString(16)}`]],
+        params: [`0x${chainConfig.chainID.toString(16)}`],
       });
     }
 
@@ -410,12 +429,7 @@ export class DAPPBrowser extends React.Component<
       // selectedChainConfig,
     } = this.state;
 
-    const {
-      dappUrl,
-      dappName,
-      theme,
-      // chainConfigs,
-    } = this.props;
+    const { dappUrl, dappName, theme } = this.props;
 
     const url = new URL(dappUrl);
     if (theme) {
