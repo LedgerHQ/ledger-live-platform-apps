@@ -12,6 +12,7 @@ import AccountSelector from "./components/AccountSelector";
 import AccountRequest from "./components/AccountRequest";
 import ControlBar from "./components/ControlBar";
 import Loader from "./components/Loader";
+import CookiesBlocked from "./components/CookiesBlocked";
 
 const AppLoaderPageContainer = styled.div`
   height: 100%;
@@ -80,6 +81,7 @@ type WebBrowserState = {
   clientLoaded: boolean;
   fetchingAccounts: boolean;
   connected: boolean;
+  cookiesBlocked: boolean;
 };
 
 const getInitialState = (): WebBrowserState => {
@@ -89,6 +91,7 @@ const getInitialState = (): WebBrowserState => {
     clientLoaded: false,
     fetchingAccounts: false,
     connected: false,
+    cookiesBlocked: false,
   };
 };
 
@@ -98,6 +101,32 @@ export class WebBrowser extends React.Component<
 > {
   ledgerAPI: LedgerLiveApi | LedgerLiveApiMock;
   iframeRef = React.createRef<HTMLIFrameElement>();
+
+  wrapThirdPartyCookiesErrorHandler =
+    <T extends unknown[], R>(cb: (...args: T) => R) =>
+    (...args: T) => {
+      try {
+        return cb(...args);
+      } catch (err) {
+        // specifically catch 'Access is denied...' error on `localStorage`
+        // (means that third-party cookies are disabled on host)
+        if (err instanceof DOMException && err.code === 18) {
+          console.dir(err);
+          this.setState({ cookiesBlocked: true });
+        } else {
+          throw err;
+        }
+      }
+    };
+
+  localStorage = {
+    setItem: this.wrapThirdPartyCookiesErrorHandler(
+      (key: string, val: string) => localStorage.setItem(key, val)
+    ),
+    getItem: this.wrapThirdPartyCookiesErrorHandler((key: string) =>
+      localStorage.getItem(key)
+    ),
+  };
 
   constructor(props: WebBrowserProps) {
     super(props);
@@ -132,7 +161,9 @@ export class WebBrowser extends React.Component<
         )
       : undefined;
     const storedAccountId: string | null =
-      typeof window !== "undefined" ? localStorage.getItem("accountId") : null;
+      typeof window !== "undefined"
+        ? this.localStorage.getItem("accountId") || null
+        : null;
     const storedAccount =
       storedAccountId !== null
         ? accounts.find((account: Account) => account.id === storedAccountId)
@@ -184,7 +215,7 @@ export class WebBrowser extends React.Component<
   selectAccount(account: Account | undefined) {
     if (account) {
       if (typeof window !== "undefined") {
-        localStorage.setItem("accountId", account.id);
+        this.localStorage.setItem("accountId", account.id);
       }
     }
 
@@ -215,11 +246,16 @@ export class WebBrowser extends React.Component<
       fetchingAccounts,
       connected,
       selectedAccount,
+      cookiesBlocked,
     } = this.state;
 
     const { webAppName } = this.props;
 
     const url = this.getUrl();
+
+    if (cookiesBlocked) {
+      return <CookiesBlocked />;
+    }
 
     return (
       <AppLoaderPageContainer>
