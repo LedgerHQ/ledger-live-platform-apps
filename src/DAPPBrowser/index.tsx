@@ -12,6 +12,7 @@ import LedgerLiveApi, {
 import AccountSelector from "../components/AccountSelector";
 import AccountRequest from "../components/AccountRequest";
 import ControlBar from "../components/ControlBar";
+import CookiesBlocked from "../components/CookiesBlocked";
 
 import { SmartWebsocket } from "./SmartWebsocket";
 import { convertEthToLiveTX } from "./helper";
@@ -99,6 +100,7 @@ type DAPPBrowserState = {
   clientLoaded: boolean;
   fetchingAccounts: boolean;
   connected: boolean;
+  cookiesBlocked: boolean;
 };
 
 const getInitialState = (props: DAPPBrowserProps): DAPPBrowserState => {
@@ -113,6 +115,7 @@ const getInitialState = (props: DAPPBrowserProps): DAPPBrowserState => {
     clientLoaded: false,
     fetchingAccounts: false,
     connected: false,
+    cookiesBlocked: false,
   };
 };
 
@@ -123,6 +126,31 @@ export class DAPPBrowser extends React.Component<
   ledgerAPI: LedgerLiveApi | LedgerLiveApiMock;
   websocket: SmartWebsocket | undefined;
   iframeRef = React.createRef<HTMLIFrameElement>();
+
+  wrapThirdPartyCookiesErrorHandler =
+    <T extends unknown[], R>(cb: (...args: T) => R) =>
+    (...args: T) => {
+      try {
+        return cb(...args);
+      } catch (err) {
+        // specifically catch 'Access is denied...' error on `localStorage`
+        // (means that third-party cookies are disabled on host)
+        if (err instanceof DOMException && err.code === 18) {
+          this.setState({ cookiesBlocked: true });
+        } else {
+          throw err;
+        }
+      }
+    };
+
+  localStorage = {
+    setItem: this.wrapThirdPartyCookiesErrorHandler(
+      (key: string, val: string) => localStorage.setItem(key, val)
+    ),
+    getItem: this.wrapThirdPartyCookiesErrorHandler((key: string) =>
+      localStorage.getItem(key)
+    ),
+  };
 
   constructor(props: DAPPBrowserProps) {
     super(props);
@@ -268,7 +296,9 @@ export class DAPPBrowser extends React.Component<
       ? accounts.find((account) => account.id === this.props.initialAccountId)
       : undefined;
     const storedAccountId: string | null =
-      typeof window !== "undefined" ? localStorage.getItem("accountId") : null;
+      typeof window !== "undefined"
+        ? this.localStorage.getItem("accountId") || null
+        : null;
     const storedAccount =
       storedAccountId !== null
         ? accounts.find((account) => account.id === storedAccountId)
@@ -359,7 +389,7 @@ export class DAPPBrowser extends React.Component<
 
     if (account) {
       if (typeof window !== "undefined") {
-        localStorage.setItem("accountId", account.id);
+        this.localStorage.setItem("accountId", account.id);
       }
 
       this.sendMessageToDAPP({
@@ -380,7 +410,7 @@ export class DAPPBrowser extends React.Component<
       await this.initChainConfig(chainConfig);
 
       if (typeof window !== "undefined") {
-        localStorage.setItem("chainId", chainConfig.chainID.toString());
+        this.localStorage.setItem("chainId", chainConfig.chainID.toString());
       }
 
       this.sendMessageToDAPP({
@@ -409,6 +439,7 @@ export class DAPPBrowser extends React.Component<
       connected,
       selectedAccount,
       // selectedChainConfig,
+      cookiesBlocked,
     } = this.state;
 
     const {
@@ -421,6 +452,10 @@ export class DAPPBrowser extends React.Component<
     const url = new URL(dappUrl);
     if (theme) {
       url.searchParams.set("theme", theme);
+    }
+
+    if (cookiesBlocked) {
+      return <CookiesBlocked />;
     }
 
     return (
