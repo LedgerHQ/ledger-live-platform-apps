@@ -28,7 +28,7 @@ type ThemeProps = {
   };
 };
 
-const SUPPORTED_CURRENCIES = ["ethereum", "bitcoin"];
+const SUPPORTED_CURRENCIES = ["ethereum", "bitcoin", "algorand"];
 
 const WYRE_CONFIG: { [key: string]: WyreConfig } = {
   prod: {
