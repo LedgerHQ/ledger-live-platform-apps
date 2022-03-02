@@ -1,3 +1,12 @@
+⚠️ **This repo is soon to be deprecated, we should not build on it anymore** ⚠️
+
+TODO before sunset 🌅
+- [ ] Make the Wyre platform app in the [discover catalog](https://github.com/LedgerHQ/ledger-live-assets/blob/master/platform/apps/v1/data.json#L470) use the new [platform-app-wyre repo](https://github.com/LedgerHQ/platform-app-wyre)
+- [ ] Move the [web-browwser](https://github.com/LedgerHQ/ledger-live-platform-apps/blob/main/pages/app/web-browser.tsx) app in it's own repo
+- [X] Move the [dapp-browser](https://github.com/LedgerHQ/ledger-live-platform-apps/blob/main/pages/app/dapp-browser.tsx) app in it's own repo. ✅ Done -> cf. [**here**](https://github.com/LedgerHQ/eth-dapp-browser)
+
+----
+
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started
